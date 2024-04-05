@@ -1,7 +1,5 @@
 # quave:collections
 
-### MIGRATED TO https://github.com/quavedev/meteor-packages/tree/main/collections
-
 `quave:collections` is a Meteor package that allows you to create your collections in a standard way.
 
 Features
