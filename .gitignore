@@ -2,3 +2,4 @@
 node_modules
 .npm
 .meteor/local
+.eslint-meteor-files
