@@ -1,5 +1,11 @@
 # Changelog
 
+# 4.0.7 (2024-04-21)
+
+- Reorganizes exports to avoid confusions between server and client. To 
+  understand which named exports are available, check the 
+ [client.js](./client.js) and [server.js](./server.js) files.
+
 # 4.0.6 (2024-04-21)
 
 - Exposing more modules in the server.
@@ -7,7 +13,8 @@
 # 4.0.5 (2024-04-21)
 
 - Improves documentation about the behavior of `onError` and `onExpectedError`
-- Also adjusts the behaviors of `onError` and `onExpectedError` to be more consistent with the documentation.
+- Also adjusts the behaviors of `onError` and `onExpectedError` to be more  
+  consistent with the documentation.
 
 # 4.0.4 (2024-04-21)
 

@@ -194,6 +194,10 @@ Meteor.startup(() => {
 });
 ```
 
+### Available Imports
+
+To understand which named exports are available, check the [client.js](./client.js) and [server.js](./server.js) files.
+
 ### License
 
 MIT
