@@ -1,5 +1,7 @@
 .idea/
 node_modules
 .npm
+
 .meteor/local
+.versions
 .eslint-meteor-files
