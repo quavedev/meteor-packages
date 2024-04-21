@@ -66,13 +66,13 @@ const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError
     Meteor.call(methodName, argWithAdditionalArgs, (error, result) => {
       if (error) {
         if (onExpectedErrorFinal && error.error === EXPECTED_ERROR) {
-          onExpectedErrorFinal(error.reason || expectedErrorReason);
+          onExpectedErrorFinal(error.reason || expectedErrorReason, { methodName, arg, error });
         }
-        onError(error);
+        onError({ error, methodName, arg });
         reject(error);
         return;
       }
-      onSuccess(result);
+      onSuccess({ result, methodName, arg });
       resolve(result);
     });
   });
