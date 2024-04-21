@@ -136,13 +136,29 @@ export const Snapshot = () => {
 
 ### Extra Features
 
-#### `EXPECTED_ERROR_SERVER`
+#### `EXPECTED_ERROR`
 
 When you call a method and the server returns an error, we check if the 
 error is an expected error. To throw this error in the server you can use 
 this constant `EXPECTED_ERROR`. It is exported from the package.
 
+then you need to throw a `Meteor.Error` where the first argument is 
+`EXPECTED_ERROR` and the second argument is the reason for the error, 
+usually a friendly error message for the final user.
+
+Example:
+
+```js
 import { EXPECTED_ERROR } from 'meteor/quave:react-data';
+
+Meteor.methods({
+    updateMyProfile({profileData}) {
+        if (!profileData.email) {
+            throw new Meteor.Error(EXPECTED_ERROR, 'Email field is required to update your profile');
+        }
+    }
+});
+```
 
 #### `meteorCallPromisified`
 
