@@ -114,6 +114,13 @@ this constant `EXPECTED_ERROR`. It is exported from the package.
 
 import { EXPECTED_ERROR } from 'meteor/quave:react-data';
 
+#### `meteorCallPromisified`
+
+To avoid workarounds and non-standard
+way to call simple methods when you don't have a React component.
+
+It implements just a `Meteor.call` wrapped in a Promise to get result or error.
+
 #### `setGetAdditionalArgsFunction`
 
 In some cases is nice to inject some argument in all the method calls and subscribes, for example, providing the language from the client or timezone.

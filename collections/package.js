@@ -2,7 +2,7 @@ Package.describe({
   name: 'quave:collections',
   version: '2.0.1',
   summary: 'Utility package to create Meteor collections in a standard way',
-  git: 'https://github.com/quavedev/meteor-packages/blob/master/collections',
+  git: 'https://github.com/quavedev/meteor-packages/tree/main/collections',
 });
 
 Npm.depends({

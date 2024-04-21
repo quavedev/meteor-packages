@@ -1,5 +1,10 @@
 # Changelog
 
+# 4.0.2 (2024-04-21)
+
+- Introduces `meteorCallPromisified` to avoid workarounds and non-standard 
+  way to call simple methods when you don't have a React component.
+
 # 4.0.1 (2024-04-21)
 
 - Documentation improvements.

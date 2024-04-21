@@ -47,6 +47,14 @@ export const useData = ({
   return { data: result?.fetch ? result.fetch() : result };
 };
 
+export const meteorCallPromisified = (methodName, ...args) =>
+    new Promise((resolve, reject) => {
+      Meteor.call(methodName, ...args, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+
 const methodCall = async (methodName, arg, { openAlert } = {}) =>
   new Promise((resolve, reject) => {
     const argWithAdditionalArgs = {
