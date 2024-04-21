@@ -55,28 +55,32 @@ export const meteorCallPromisified = (methodName, ...args) =>
       });
     });
 
-const methodCall = async (methodName, arg, { openAlert } = {}) =>
+const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError, onSuccess } = {}) =>
   new Promise((resolve, reject) => {
     const argWithAdditionalArgs = {
       ...(arg || {}),
       ...QuaveReactData.getAdditionalArgs(),
     };
+
+    const onExpectedErrorFinal = openAlert || onExpectedError;
     Meteor.call(methodName, argWithAdditionalArgs, (error, result) => {
       if (error) {
-        if (openAlert && error.error === EXPECTED_ERROR) {
-          openAlert(error.reason || expectedErrorReason);
+        if (onExpectedErrorFinal && error.error === EXPECTED_ERROR) {
+          onExpectedErrorFinal(error.reason || expectedErrorReason);
         }
+        onError(error);
         reject(error);
         return;
       }
+      onSuccess(result);
       resolve(result);
     });
   });
 
-export const useMethod = ({ openAlert } = {}) => {
+export const useMethod = (options) => {
   return {
     async method(name, arg) {
-      return methodCall(name, arg, { openAlert });
+      return methodCall(name, arg, options);
     },
   };
 };

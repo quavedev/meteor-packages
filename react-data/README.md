@@ -55,6 +55,24 @@ export const Snapshot = () => {
 }
 ```
 
+You can also provide options for `useMethod` such as:
+
+- `onExpectedError`: it's called with the `reason` field of the error when 
+  provided in an `EXPECTED_ERROR`. Otherwise, you can also set a custom default 
+  text with `QuaveReactData.setDefaultExpectedErrorReason` method for all 
+  expected errors or it will pass `Unknown error` text.
+  - `openAlert` (deprecated): it will work because onExpectedError has the 
+    same behavior, so if will provide openAlert option we will consider it 
+  the same as onExpectedError, prefer `onExpectedError` to avoid breaking 
+    changes in the future.
+- `onError`:  it's called with the error even when it's expected, so 
+  it will be called for any error. It's useful when you want to log errors 
+  for example. The promise will also be rejected with this error right after 
+  this is invoked.
+- `onSuccess`: it's called with the result of your method when it finishes 
+  without errors. The promise will also be resolved with this result right 
+  after this is invoked.
+
 ### `useData`
 
 Subscribe to a publication and find the data.

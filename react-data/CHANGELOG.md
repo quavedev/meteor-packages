@@ -1,5 +1,10 @@
 # Changelog
 
+# 4.0.3 (2024-04-21)
+
+- Introduces more options to `useMethod`: `onExpectedError`, `onError`, 
+  `onSuccess`. Read more in the documentation.
+
 # 4.0.2 (2024-04-21)
 
 - Introduces `meteorCallPromisified` to avoid workarounds and non-standard 

@@ -2,7 +2,7 @@
 Package.describe({
   name: 'quave:react-data',
   summary: 'Utilities to manage data with React',
-  version: '4.0.2',
+  version: '4.0.3',
   git: 'https://github.com/quavedev/meteor-packages/tree/main/react-data',
 });
 
