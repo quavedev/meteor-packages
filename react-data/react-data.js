@@ -1,20 +1,5 @@
-import { Meteor } from 'meteor/meteor';
 import { useFind, useSubscribe } from 'meteor/react-meteor-data';
-import { EXPECTED_ERROR } from './common';
-
-let expectedErrorReason = 'Unknown error';
-const QuaveReactData = {
-  getAdditionalArgs() {
-    return {};
-  },
-  setDefaultExpectedErrorReason(defaultExpectedErrorReason) {
-    expectedErrorReason = defaultExpectedErrorReason;
-  },
-};
-
-export const setGetAdditionalArgsFunction = (fn) => {
-  QuaveReactData.getAdditionalArgs = fn;
-};
+import {methodCall, QuaveReactData} from "./common";
 
 export const useData = ({
   publicationName,
@@ -47,37 +32,6 @@ export const useData = ({
   return { data: result?.fetch ? result.fetch() : result };
 };
 
-export const meteorCallPromisified = (methodName, ...args) =>
-    new Promise((resolve, reject) => {
-      Meteor.call(methodName, ...args, (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      });
-    });
-
-const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError, onSuccess } = {}) =>
-  new Promise((resolve, reject) => {
-    const argWithAdditionalArgs = {
-      ...(arg || {}),
-      ...QuaveReactData.getAdditionalArgs(),
-    };
-
-    const onExpectedErrorFinal = openAlert || onExpectedError;
-    Meteor.call(methodName, argWithAdditionalArgs, (error, result) => {
-      if (error) {
-        if (onExpectedErrorFinal && error.error === EXPECTED_ERROR) {
-          onExpectedErrorFinal(error.reason || expectedErrorReason, { methodName, arg, error });
-          reject(error);
-          return;
-        }
-        onError({ error, methodName, arg });
-        reject(error);
-        return;
-      }
-      onSuccess({ result, methodName, arg });
-      resolve(result);
-    });
-  });
 
 export const useMethod = (options) => {
   return {

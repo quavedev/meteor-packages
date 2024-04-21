@@ -1,6 +1,10 @@
 # Changelog
 
-# 4.0.5(2024-04-21)
+# 4.0.6 (2024-04-21)
+
+- Exposing more modules in the server.
+
+# 4.0.5 (2024-04-21)
 
 - Improves documentation about the behavior of `onError` and `onExpectedError`
 - Also adjusts the behaviors of `onError` and `onExpectedError` to be more consistent with the documentation.
