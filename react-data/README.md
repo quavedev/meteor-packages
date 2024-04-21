@@ -57,25 +57,23 @@ export const Snapshot = () => {
 
 You can also provide options for `useMethod` such as:
 
-- `onError`:  it's called with the error even when it's expected, so 
-  it will be called for any error. It's useful when you want to log errors 
+- `onError`:  it's called with the error, only when it's not expected. It's useful when you want to log errors 
   for example. The promise will also be rejected with this error right after 
-  this is invoked.
+  this is invoked. One argument will be passed with the following properties:
+  - `error`: in case of errors
+  - `methodName`: the method name called for all
+  - `arg`: the arg sent to the method for all
 - `onSuccess`: it's called with the result of your method when it finishes 
   without errors. The promise will also be resolved with this result right 
-  after this is invoked.
-
-All these listeners will receive an object with the following properties:
-- `error`: in case of errors
-- `result`: in case of success
-- `methodName`: the method name called for all
-- `arg`: the arg sent to the method for all
-
-We also have another one:
-
-- `onExpectedError`: it's called with two args:  
-  - first: the `reason` field of the error when provided in an 
-    `EXPECTED_ERROR`. Otherwise, you can also set a custom default
+  after this is invoked. One argument will be passed with the following 
+  properties:
+  - `result`: in case of success
+  - `methodName`: the method name called for all
+  - `arg`: the arg sent to the method for all
+- `onExpectedError`:  it's called with the error, only when it's expected. Two 
+  arguments will be passed with the following properties:
+  - first: the `reason`, usually a String, of the error when provided 
+    in an `EXPECTED_ERROR`. Otherwise, you can also set a custom default
   text with `QuaveReactData.setDefaultExpectedErrorReason` method for all
   expected errors or it will pass `Unknown error` text.
   - second: is an object with the following properties:

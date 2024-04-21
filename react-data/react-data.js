@@ -67,6 +67,8 @@ const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError
       if (error) {
         if (onExpectedErrorFinal && error.error === EXPECTED_ERROR) {
           onExpectedErrorFinal(error.reason || expectedErrorReason, { methodName, arg, error });
+          reject(error);
+          return;
         }
         onError({ error, methodName, arg });
         reject(error);

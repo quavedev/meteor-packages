@@ -1,5 +1,10 @@
 # Changelog
 
+# 4.0.5(2024-04-21)
+
+- Improves documentation about the behavior of `onError` and `onExpectedError`
+- Also adjusts the behaviors of `onError` and `onExpectedError` to be more consistent with the documentation.
+
 # 4.0.4 (2024-04-21)
 
 - Provide more data listener of `useMethod`: `onExpectedError`, `onError`, 
