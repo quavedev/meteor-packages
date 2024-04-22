@@ -1,5 +1,9 @@
 # Changelog
 
+# 4.0.8 (2024-04-21)
+
+- Exports `EXPECTED_ERROR` in the client as well.
+
 # 4.0.7 (2024-04-21)
 
 - Reorganizes exports to avoid confusions between server and client. To 

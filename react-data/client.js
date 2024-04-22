@@ -1,3 +1,3 @@
 export { useData, useMethod } from './hooks';
 
-export { meteorCallPromisified } from './common';
+export { meteorCallPromisified, EXPECTED_ERROR } from './common';
