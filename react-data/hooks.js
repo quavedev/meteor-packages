@@ -1,5 +1,30 @@
 import { useFind, useSubscribe } from 'meteor/react-meteor-data';
-import {methodCall, QuaveReactData} from "./common";
+import { methodCall, QuaveReactData } from './common';
+
+export const useDataSubscribe = ({
+  publicationName,
+  arg,
+  skip,
+  shouldSkip,
+}) => {
+  const argWithAdditionalArgs = {
+    ...(arg || {}),
+    ...QuaveReactData.getAdditionalArgs(),
+  };
+  const isSkip = skip || (shouldSkip && shouldSkip());
+  const isLoading = useSubscribe(
+    isSkip ? null : publicationName,
+    argWithAdditionalArgs
+  );
+
+  if (isLoading()) {
+    return {
+      loading: true,
+    };
+  }
+
+  return { loading: false };
+};
 
 export const useData = ({
   publicationName,
@@ -32,11 +57,19 @@ export const useData = ({
   return { data: result?.fetch ? result.fetch() : result };
 };
 
+const emptyCursor = () => ({
+  fetch: () => [],
+  observe: () => {},
+  stop: () => {},
+});
+export const useFindData = ({ find, skip, deps = [] }) =>
+  useFind(skip ? emptyCursor : find, deps);
 
-export const useMethod = (options) => {
-  return {
-    async method(name, arg) {
-      return methodCall(name, arg, options);
-    },
-  };
-};
+export const useFindOneData = ({ find, skip, deps = [] }) =>
+  useFind(skip ? emptyCursor : find, deps)?.[0];
+
+export const useMethod = (options) => ({
+  async method(name, arg) {
+    return methodCall(name, arg, options);
+  },
+});

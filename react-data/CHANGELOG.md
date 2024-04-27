@@ -1,5 +1,9 @@
 # Changelog
 
+# 4.1.0 (2024-04-27)
+
+- Introduces two new hooks: `useDataSubscribe`, `useFindData` and `useFindOneData`. Read more in the documentation.
+
 # 4.0.9 (2024-04-27)
 
 - Introduces one new option: `onFinally`. Read more in the documentation.

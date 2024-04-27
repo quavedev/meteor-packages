@@ -24,7 +24,7 @@ Both methods listed below rely on the idea of providing a single object to `Mete
 
 It means that you should send the data to the server putting in the arg field.
 
-For example, instead of using `Meteor.call('myMethod', param1, param2);` you should do  `Meteor.call('myMethod', { param1, param2 });`. Of course, using the `method` provided instead of `Meteor.call`. 
+For example, instead of using `Meteor.call('myMethod', param1, param2);` you should do `Meteor.call('myMethod', { param1, param2 });`. Of course, using the `method` provided instead of `Meteor.call`.
 
 The same for `Meteor.subscribe` but also using `useData` and in this case, as we have many ways to use it, you should use a named property called `arg` to send your arguments to the server.
 
@@ -35,6 +35,7 @@ We have decided this way because of our long experience with Meteor projects and
 Return a `method` function that is async. You can call it with a method name and an argument.
 
 Example:
+
 ```jsx
 import { useMethod } from 'meteor/quave:react-data';
 
@@ -45,37 +46,37 @@ export const Snapshot = () => {
     const snapshot = await method('saveSnapshot', {
       snapshot: {
         _id: snapshotId,
-        items
+        items,
       },
     });
     clear();
   };
-  
+
   // continue to render...
-}
+};
 ```
 
 You can also provide options for `useMethod` such as:
 
-- `onError`:  it's called with the error, only when it's not expected. It's useful when you want to log errors 
-  for example. The promise will also be rejected with this error right after 
+- `onError`: it's called with the error, only when it's not expected. It's useful when you want to log errors
+  for example. The promise will also be rejected with this error right after
   this is invoked. One argument will be passed with the following properties:
   - `error`: in case of errors
   - `methodName`: the method name
   - `arg`: the arg sent to the method
-- `onSuccess`: it's called with the result of your method when it finishes 
-  without errors. The promise will also be resolved with this result right 
-  after this is invoked. One argument will be passed with the following 
+- `onSuccess`: it's called with the result of your method when it finishes
+  without errors. The promise will also be resolved with this result right
+  after this is invoked. One argument will be passed with the following
   properties:
   - `result`: the response of the method
   - `methodName`: the method name
   - `arg`: the arg sent to the method
-- `onExpectedError`:  it's called with the error, only when it's expected. Two 
+- `onExpectedError`: it's called with the error, only when it's expected. Two
   arguments will be passed with the following properties:
-  - first: the `expectedReason`, usually a String, of the error when provided 
+  - first: the `expectedReason`, usually a String, of the error when provided
     in an `EXPECTED_ERROR`. Otherwise, you can also set a custom default
-  text with `QuaveReactData.setDefaultExpectedErrorReason` method
-  expected errors or it will pass `Unknown error` text.
+    text with `QuaveReactData.setDefaultExpectedErrorReason` method
+    expected errors or it will pass `Unknown error` text.
   - second: is an object with the following properties:
     - `error`: the error object
     - `methodName`: the method name
@@ -84,7 +85,7 @@ You can also provide options for `useMethod` such as:
     same behavior, so if will provide openAlert option we will consider it
     the same as onExpectedError, prefer `onExpectedError` to avoid breaking
     changes in the future.
-- `onFinally`:  it's called after any of the other callbacks are called. One 
+- `onFinally`: it's called after any of the other callbacks are called. One
   argument will be passed with the following properties:
   - `result`: the response of the method when success, can be undefined
   - `error`: the error object, can be undefined
@@ -97,27 +98,26 @@ You can also provide options for `useMethod` such as:
 Subscribe to a publication and find the data.
 
 Example:
+
 ```jsx
 import { useData } from 'meteor/quave:react-data';
 import { useLoggedUser } from 'meteor/quave:logged-user-react';
 
 export const Home = () => {
   const { loggedUser } = useLoggedUser();
-  
-  const {
-    data: snapshots,
-    loading
-  } = useData({
+
+  const { data: snapshots, loading } = useData({
     publicationName: 'mySnapshots',
     skip: !loggedUser,
     find: () => SnapshotsCollection.find({}, { sort: { at: -1 } }),
   });
 
   // continue to render...
-}
+};
 ```
 
 A more complex example:
+
 ```jsx
 import { useData } from 'meteor/quave:react-data';
 
@@ -136,21 +136,89 @@ export const Snapshot = () => {
   });
 
   // continue to render...
-}
+};
 ```
 
 `shouldSkip` property is also available, it works like skip, but it is a function instead of a static property.
+
+### `useDataSubscribe`
+
+Subscribe to a publication but without finding the data.
+
+Example:
+
+```jsx
+import { useDataSubscribe } from 'meteor/quave:react-data';
+import { useLoggedUser } from 'meteor/quave:logged-user-react';
+
+export const Home = () => {
+  const { loggedUser } = useLoggedUser();
+
+  const { loading } = useDataSubscribe({
+    publicationName: 'mySnapshots',
+    skip: !loggedUser,
+  });
+
+  // continue to render...
+  // and in other component you can find the data
+  // (see more hooks below)
+};
+```
+
+### `useFindData`
+
+Find data from a collection that is already published to Minimongo.
+
+Example:
+
+```jsx
+import { useFindData } from 'meteor/quave:react-data';
+
+const Chats = ({ isPrivate }) => {
+  const chats = useFindData({
+    skip: !isPrivate,
+    deps: [isPrivate],
+    find: () => ChatsCollection.find({ isPrivate: !!isPrivate }),
+  });
+
+  // chats is an array of ChatsCollection documents
+  // continue to render...
+};
+```
+
+### `useFindOneData`
+
+Find data from a collection that is already published to Minimongo but only
+the first one, like a `findOne`.
+
+Example:
+
+```jsx
+import { useFindOneData } from 'meteor/quave:react-data';
+
+const Chat = ({ isPrivate }) => {
+  const chat = useFindOneData({
+    skip: !isPrivate,
+    deps: [isPrivate],
+    find: () => ChatsCollection.find({ isPrivate: !!isPrivate }),
+  });
+
+  // chats is just one document of ChatsCollection documents
+  // see that the find is still a find as we need to create a cursor
+  // continue to render...
+};
+```
 
 ### Extra Features
 
 #### `EXPECTED_ERROR`
 
-When you call a method and the server returns an error, we check if the 
-error is an expected error. To throw this error in the server you can use 
+When you call a method and the server returns an error, we check if the
+error is an expected error. To throw this error in the server you can use
 this constant `EXPECTED_ERROR`. It is exported from the package.
 
-then you need to throw a `Meteor.Error` where the first argument is 
-`EXPECTED_ERROR` and the second argument is the reason for the error, 
+then you need to throw a `Meteor.Error` where the first argument is
+`EXPECTED_ERROR` and the second argument is the reason for the error,
 usually a friendly error message for the final user.
 
 Example:
@@ -159,11 +227,14 @@ Example:
 import { EXPECTED_ERROR } from 'meteor/quave:react-data';
 
 Meteor.methods({
-    updateMyProfile({profileData}) {
-        if (!profileData.email) {
-            throw new Meteor.Error(EXPECTED_ERROR, 'Email field is required to update your profile');
-        }
+  updateMyProfile({ profileData }) {
+    if (!profileData.email) {
+      throw new Meteor.Error(
+        EXPECTED_ERROR,
+        'Email field is required to update your profile'
+      );
     }
+  },
 });
 ```
 
