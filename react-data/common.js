@@ -25,7 +25,7 @@ export const meteorCallPromisified = (methodName, ...args) =>
         });
     });
 
-export const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError, onSuccess } = {}) =>
+export const methodCall = async (methodName, arg, { openAlert, onExpectedError, onError, onSuccess, onFinally } = {}) =>
     new Promise((resolve, reject) => {
         const argWithAdditionalArgs = {
             ...(arg || {}),
@@ -36,15 +36,19 @@ export const methodCall = async (methodName, arg, { openAlert, onExpectedError, 
         Meteor.call(methodName, argWithAdditionalArgs, (error, result) => {
             if (error) {
                 if (onExpectedErrorFinal && error.error === EXPECTED_ERROR) {
-                    onExpectedErrorFinal(error.reason || expectedErrorReason, { methodName, arg, error });
+                    const expectedReason = error.reason || expectedErrorReason;
+                    onExpectedErrorFinal(expectedReason, { methodName, arg, error });
+                    onFinally({ methodName, arg, error, expectedReason });
                     reject(error);
                     return;
                 }
                 onError({ error, methodName, arg });
+                onFinally({ methodName, arg, error });
                 reject(error);
                 return;
             }
             onSuccess({ result, methodName, arg });
+            onFinally({ result, methodName, arg });
             resolve(result);
         });
     });

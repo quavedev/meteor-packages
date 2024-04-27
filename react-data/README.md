@@ -61,29 +61,36 @@ You can also provide options for `useMethod` such as:
   for example. The promise will also be rejected with this error right after 
   this is invoked. One argument will be passed with the following properties:
   - `error`: in case of errors
-  - `methodName`: the method name called for all
-  - `arg`: the arg sent to the method for all
+  - `methodName`: the method name
+  - `arg`: the arg sent to the method
 - `onSuccess`: it's called with the result of your method when it finishes 
   without errors. The promise will also be resolved with this result right 
   after this is invoked. One argument will be passed with the following 
   properties:
-  - `result`: in case of success
-  - `methodName`: the method name called for all
-  - `arg`: the arg sent to the method for all
+  - `result`: the response of the method
+  - `methodName`: the method name
+  - `arg`: the arg sent to the method
 - `onExpectedError`:  it's called with the error, only when it's expected. Two 
   arguments will be passed with the following properties:
-  - first: the `reason`, usually a String, of the error when provided 
+  - first: the `expectedReason`, usually a String, of the error when provided 
     in an `EXPECTED_ERROR`. Otherwise, you can also set a custom default
-  text with `QuaveReactData.setDefaultExpectedErrorReason` method for all
+  text with `QuaveReactData.setDefaultExpectedErrorReason` method
   expected errors or it will pass `Unknown error` text.
   - second: is an object with the following properties:
-    - `error`: in case of errors
-    - `methodName`: the method name called for all
-    - `arg`: the arg sent to the method for all
+    - `error`: the error object
+    - `methodName`: the method name
+    - `arg`: the arg sent to the method
   - `openAlert` (deprecated): it will work because onExpectedError has the
     same behavior, so if will provide openAlert option we will consider it
     the same as onExpectedError, prefer `onExpectedError` to avoid breaking
     changes in the future.
+- `onFinally`:  it's called after any of the other callbacks are called. One 
+  argument will be passed with the following properties:
+  - `result`: the response of the method when success, can be undefined
+  - `error`: the error object, can be undefined
+  - `expectedReason`: in case of expected errors, can be undefined
+  - `methodName`: the method name
+  - `arg`: the arg sent to the method
 
 ### `useData`
 

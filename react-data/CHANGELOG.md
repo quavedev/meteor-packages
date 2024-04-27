@@ -1,5 +1,9 @@
 # Changelog
 
+# 4.0.9 (2024-04-27)
+
+- Introduces one new option: `onFinally`. Read more in the documentation.
+
 # 4.0.8 (2024-04-21)
 
 - Exports `EXPECTED_ERROR` in the client as well.
