@@ -1,5 +1,9 @@
 # Changelog
 
+# 4.1.1 (2024-04-27)
+
+- Fix errors when onSuccess, onError or onFinally are not defined. Now we defined a non-op function to avoid errors.
+
 # 4.1.0 (2024-04-27)
 
 - Introduces two new hooks: `useDataSubscribe`, `useFindData` and `useFindOneData`. Read more in the documentation.
