@@ -1,7 +1,7 @@
 import { Accounts } from 'meteor/accounts-base';
 import { Random } from 'meteor/random';
-import { Meteor } from 'meteor/meteor'
-import { Roles } from 'meteor/alanning:roles'
+import { Meteor } from 'meteor/meteor';
+import { Roles } from 'meteor/alanning:roles';
 
 // import { UserPresence } from 'meteor/socialize:user-presence';
 
@@ -18,64 +18,64 @@ import { Roles } from 'meteor/alanning:roles'
 //     Meteor.users.update({_id:userId}, {$unset:{status:true}})
 // });
 
-Meteor.publish('accounts_userData', function(options) {
-    const uid = this.userId;
+Meteor.publish('accounts_userData', function (options) {
+  const uid = this.userId;
 
-    if (!uid) {
-        return this.ready();
-    }
+  if (!uid) {
+    return this.ready();
+  }
 
-    return Meteor.users.find(
-        {
-            _id: uid,
-        },
-        options
-    );
+  return Meteor.users.find(
+    {
+      _id: uid,
+    },
+    options
+  );
 });
 
-Meteor.publish('accounts_usersAssoc', function() {
-    let _groups = Roles.getGroupsForUser(this.userId, 'subscribed');
+Meteor.publish('accounts_usersAssoc', async function () {
+  let _groups = await Roles.getScopesForUserAsync(this.userId, 'subscribed');
 
-    return Meteor.users.find(
-        {
-            _id: {
-                $in: [this.userId], //an array of ids from roles getGroupsForUser
-            },
-        },
-        {
-            fields: {
-                profile: 1,
-                subscription: 1,
-                username: 1,
-            },
-            sort: {
-                createdAt: 1,
-            },
-        }
-    );
+  return Meteor.users.find(
+    {
+      _id: {
+        $in: [this.userId], //an array of ids from roles getGroupsForUser
+      },
+    },
+    {
+      fields: {
+        profile: 1,
+        subscription: 1,
+        username: 1,
+      },
+      sort: {
+        createdAt: 1,
+      },
+    }
+  );
 });
 
 Meteor.methods({
-    accounts_createUser(data) {
-        const email = `${Random.id()}@x.com`;
-        const userId = Accounts.createUser({
-            username: Random.id(),
-            email,
-            password: '12345',
-        });
+  async accounts_createUser(data) {
+    const email = `${Random.id()}@x.com`;
+    const userId = await Accounts.createUserAsync({
+      username: Random.id(),
+      email,
+      password: '12345',
+    });
 
-        Meteor.users.update(userId, {
-            $set: data,
-        });
+    await Meteor.users.updateAsync(userId, {
+      $set: data,
+    });
 
-        return {
-            userId,
-            email,
-        };
-    },
-    accounts_updateUser(filters, modifier) {
-        Meteor.users.update(filters, modifier, {
-            optimistic: false,
-        });
-    },
+    return {
+      userId,
+      email,
+    };
+  },
+  async accounts_updateUser(filters, modifier) {
+    await Meteor.users.updateAsync(filters, modifier, {
+      optimistic: false,
+    });
+  },
 });

@@ -1,6 +1,7 @@
 ## Configuration
 
 You have access to the following events:
+
 - end
 - connect
 - reconnect
@@ -16,13 +17,13 @@ In order to configure these events, you can do it like this:
 import { Config } from 'meteor/cultofcoders:redis-oplog';
 
 Object.assign(Config.redisExtras.events, {
-    reconnect({delay, attempt, error}) {
-        // put your logic here. 
-    },
-    connect(err) {
-        // put your logic here
-    },
-})
+  reconnect({ delay, attempt, error }) {
+    // put your logic here.
+  },
+  connect(err) {
+    // put your logic here
+  },
+});
 ```
 
 ## Notes

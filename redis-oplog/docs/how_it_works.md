@@ -1,4 +1,3 @@
-
 ## How it works
 
 ### Sending changes
@@ -10,37 +9,40 @@ We override the mutators from the Collection: `insert`, `update`, `upsert` and `
 sent to the database.
 
 Let's take an example:
+
 ```
 const Items = new Mongo.Collection('items')
 Items.insert({text: 'Hello'})
 ```
 
 After the insert is done into the database, we will publish to redis channel "items" (same name as the collection name) the fact
-that we did an insert, and the *_id* of the document we inserted.
+that we did an insert, and the _\_id_ of the document we inserted.
 
 For an update, things get a bit interesting in the back:
+
 ```
 Items.update(itemId, {
     $set: { text: 'Hello World!' }
 })
 ```
 
-This will publish the update event to "items" channel in Redis but also to "items::itemId" channel. 
+This will publish the update event to "items" channel in Redis but also to "items::itemId" channel.
 The reason we do this will be explored later in this document. (Direct Processing)
 
-We send to redis the update event along with the document *_id* and the fields that have been changed.
+We send to redis the update event along with the document _\_id_ and the fields that have been changed.
 
 If you choose to update multiple elements based on a selector:
+
 ```
 Items.update({archived: false}, {
     $set: {archived: true}
 }, {multi: true})
 ```
 
-In the back, we will fetch the ids (N length) that have ```{archived: false}```, it will perform the update, then it will send N messages to "messages" channel,
+In the back, we will fetch the ids (N length) that have `{archived: false}`, it will perform the update, then it will send N messages to "messages" channel,
 and another N messages to "items::itemId1", ... , "items::itemIdN" channels with the info regarding the update.
 
-*All messages are sent to Redis asynchronously so you will have no perceived delay for your methods.*
+_All messages are sent to Redis asynchronously so you will have no perceived delay for your methods._
 
 Removing something is almost the same concept as updates, except ofcourse the event sent is "REMOVE" instead of "UPDATE"
 
@@ -64,7 +66,7 @@ will share the same "watcher".
 
 ### Direct Processing
 
-There is another special use-case for listening to changes, and it is related to cursor that are filtered by _ids. We call this "Direct Processing"
+There is another special use-case for listening to changes, and it is related to cursor that are filtered by \_ids. We call this "Direct Processing"
 
 ```
 Meteor.publish('items', function () {
@@ -74,6 +76,7 @@ Meteor.publish('items', function () {
 ```
 
 In this case we won't listen to "items" channel at all. We will, instead, listen to multiple channels:
+
 - items::id1
 - items::id2
 - ...

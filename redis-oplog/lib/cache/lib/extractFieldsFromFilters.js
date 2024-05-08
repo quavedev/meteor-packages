@@ -8,29 +8,32 @@ const deepFilterFieldsObject = ['$not'];
  * @param filters
  */
 function extractFieldsFromFilters(filters) {
-    let filterFields = [];
+  let filterFields = [];
 
-    _.each(filters, (value, field) => {
-        if (field[0] !== '$') {
-            filterFields.push(field);
-        }
-    });
+  _.each(filters, (value, field) => {
+    if (field[0] !== '$') {
+      filterFields.push(field);
+    }
+  });
 
-    deepFilterFieldsArray.forEach(field => {
-        if (filters[field]) {
-            filters[field].forEach(element => {
-                filterFields = _.union(filterFields, extractFieldsFromFilters(element));
-            });
-        }
-    });
+  deepFilterFieldsArray.forEach((field) => {
+    if (filters[field]) {
+      filters[field].forEach((element) => {
+        filterFields = _.union(filterFields, extractFieldsFromFilters(element));
+      });
+    }
+  });
 
-    deepFilterFieldsObject.forEach(field => {
-        if (filters[field]) {
-            filterFields = _.union(filterFields, extractFieldsFromFilters(filters[field]));
-        }
-    });
+  deepFilterFieldsObject.forEach((field) => {
+    if (filters[field]) {
+      filterFields = _.union(
+        filterFields,
+        extractFieldsFromFilters(filters[field])
+      );
+    }
+  });
 
-    return filterFields;
+  return filterFields;
 }
 
 export default extractFieldsFromFilters;

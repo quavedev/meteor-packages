@@ -13,96 +13,96 @@ import getDedicatedChannel from '../utils/getDedicatedChannel';
  * @param channelOrCollection {Mongo.Collection|string}
  */
 export default class SyntheticMutator {
-    /**
-     * @param channels
-     * @param data
-     */
-    static publish(channels, data) {
-        const client = getRedisPusher();
+  /**
+   * @param channels
+   * @param data
+   */
+  static async publish(channels, data) {
+    const client = getRedisPusher();
 
-        channels.forEach(channel => {
-            client.publish(channel, EJSON.stringify(data));
-        });
+    for (const channel of channels) {
+      await client.publish(channel, EJSON.stringify(data));
+    }
+  }
+
+  /**
+   * @param channels
+   * @param data
+   */
+  static async insert(channels, data) {
+    channels = SyntheticMutator._extractChannels(channels, data._id);
+
+    if (!data._id) {
+      data._id = Random.id();
     }
 
-    /**
-     * @param channels
-     * @param data
-     */
-    static insert(channels, data) {
-        channels = SyntheticMutator._extractChannels(channels, data._id);
+    await SyntheticMutator.publish(channels, {
+      [RedisPipe.EVENT]: Events.INSERT,
+      [RedisPipe.SYNTHETIC]: true,
+      [RedisPipe.DOC]: data,
+    });
+  }
 
-        if (!data._id) {
-            data._id = Random.id();
+  /**
+   * @param channels
+   * @param _id
+   * @param modifier
+   */
+  static async update(channels, _id, modifier) {
+    channels = SyntheticMutator._extractChannels(channels, _id);
+
+    if (!containsOperators(modifier)) {
+      throw new Meteor.Error(
+        'Synthetic update can only be done through MongoDB operators.'
+      );
+    }
+
+    const { topLevelFields } = getFields(modifier);
+
+    let message = {
+      [RedisPipe.EVENT]: Events.UPDATE,
+      [RedisPipe.SYNTHETIC]: true,
+      [RedisPipe.DOC]: { _id },
+      [RedisPipe.MODIFIER]: modifier,
+      [RedisPipe.MODIFIED_TOP_LEVEL_FIELDS]: topLevelFields,
+    };
+
+    await SyntheticMutator.publish(channels, message);
+  }
+
+  /**
+   * @param channels
+   * @param _id
+   */
+  static async remove(channels, _id) {
+    channels = SyntheticMutator._extractChannels(channels, _id);
+
+    await SyntheticMutator.publish(channels, {
+      [RedisPipe.EVENT]: Events.REMOVE,
+      [RedisPipe.SYNTHETIC]: true,
+      [RedisPipe.DOC]: { _id },
+    });
+  }
+
+  /**
+   * @param channels
+   * @param _id
+   * @returns {*}
+   * @private
+   */
+  static _extractChannels(channels, _id) {
+    if (!Array.isArray(channels)) {
+      if (channels instanceof Mongo.Collection) {
+        const name = channels._name;
+        channels = getChannels(name);
+        if (_id) {
+          channels.push(getDedicatedChannel(name, _id));
         }
-
-        SyntheticMutator.publish(channels, {
-            [RedisPipe.EVENT]: Events.INSERT,
-            [RedisPipe.SYNTHETIC]: true,
-            [RedisPipe.DOC]: data,
-        });
+      } else {
+        channels = [channels];
+      }
     }
 
-    /**
-     * @param channels
-     * @param _id
-     * @param modifier
-     */
-    static update(channels, _id, modifier) {
-        channels = SyntheticMutator._extractChannels(channels, _id);
-
-        if (!containsOperators(modifier)) {
-            throw new Meteor.Error(
-                'Synthetic update can only be done through MongoDB operators.'
-            );
-        }
-
-        const { topLevelFields } = getFields(modifier);
-
-        let message = {
-            [RedisPipe.EVENT]: Events.UPDATE,
-            [RedisPipe.SYNTHETIC]: true,
-            [RedisPipe.DOC]: { _id },
-            [RedisPipe.MODIFIER]: modifier,
-            [RedisPipe.MODIFIED_TOP_LEVEL_FIELDS]: topLevelFields,
-        };
-
-        SyntheticMutator.publish(channels, message);
-    }
-
-    /**
-     * @param channels
-     * @param _id
-     */
-    static remove(channels, _id) {
-        channels = SyntheticMutator._extractChannels(channels, _id);
-
-        SyntheticMutator.publish(channels, {
-            [RedisPipe.EVENT]: Events.REMOVE,
-            [RedisPipe.SYNTHETIC]: true,
-            [RedisPipe.DOC]: { _id },
-        });
-    }
-
-    /**
-     * @param channels
-     * @param _id
-     * @returns {*}
-     * @private
-     */
-    static _extractChannels(channels, _id) {
-        if (!Array.isArray(channels)) {
-            if (channels instanceof Mongo.Collection) {
-                const name = channels._name;
-                channels = getChannels(name);
-                if (_id) {
-                    channels.push(getDedicatedChannel(name, _id));
-                }
-              } else {
-                channels = [channels];
-            }
-        }
-
-        return channels;
-    }
+    return channels;
+  }
 }
