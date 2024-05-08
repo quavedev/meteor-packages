@@ -1,4 +1,4 @@
-import { Vent } from 'meteor/cultofcoders:redis-oplog';
+import { Vent } from 'meteor/quave:redis-oplog';
 import { Meteor } from 'meteor/meteor';
 
 Vent.publish({

@@ -111,7 +111,7 @@ import {
   getRedisPusher,
   Events,
   RedisPipe,
-} from 'meteor/cultofcoders:redis-oplog';
+} from 'meteor/quave:redis-oplog';
 
 getRedisPusher().publish(
   'tasks',

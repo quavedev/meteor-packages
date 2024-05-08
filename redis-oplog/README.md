@@ -1,11 +1,13 @@
-## Introducing BlueLibs
-
-- [GitHub BlueLibs Monorepo](https://github.com/bluelibs/bluelibs)
-- Following the same bold vision of Meteor, but with a modern twist. www.bluelibs.com
-- Read more about our approach coming from Meteor: https://www.bluelibs.com/blog/2021/11/26/the-meteor-of-2022
-- We've implemented [RedisOplog](https://www.bluelibs.com/docs/package-x-bundle#live-data) in our framework as well, but it also works with in-memory and with customisable pubsub, not bound to redis.
-
 # Welcome to Redis Oplog
+
+### Migrated from cultofcoders:redis-oplog
+Quave version is compatible with Meteor 3.0 and forward.
+
+To migrate you can simply run
+
+```shell
+meteor remove cultofcoders:redis-oplog && meteor add quave:redis-oplog
+```
 
 ### LICENSE: MIT
 
@@ -21,7 +23,7 @@ Incrementally adoptable & works with your current Meteor project.
 ## Installation
 
 ```bash
-meteor add cultofcoders:redis-oplog
+meteor add cultofcoders:quave-oplog
 meteor add disable-oplog
 ```
 
@@ -64,7 +66,7 @@ meteor run --settings settings.json
 RedisOplog is fully backwards compatible, so there won't be any change in how you use Meteor, unless you want to fine-tune your application for absolute performance.
 
 To make sure it is compatible with other packages which extend the `Mongo.Collection` methods, make sure you go to `.meteor/packages`
-and put `cultofcoders:redis-oplog` as the first option.
+and put `quave:redis-oplog` as the first option.
 
 RedisOplog does not work with _insecure_ package, which is used for bootstrapping your app.
 
@@ -74,7 +76,7 @@ If you are interested in viewing how many observers are registered or memory con
 
 ```
 meteor shell
-import { RedisOplog } from 'meteor/cultofcoders:redis-oplog';
+import { RedisOplog } from 'meteor/quave:redis-oplog';
 
 // works only server-side
 RedisOplog.stats()
@@ -114,11 +116,6 @@ Find out how you can customize your reactivity and enable it across multiple lan
 
 If you have different workers/services that perform updates to mongo and they exist outside Meteor, you can still trigger
 reactivity for the Meteor instances with a few lines of code.
-
-## Premium Support
-
-If you are looking to scale your business using this package and you need to have your back covered. We are here to help. Feel free to contact us
-at contact@cultofcoders.com.
 
 ## Contributors
 
