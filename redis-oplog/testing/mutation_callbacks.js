@@ -11,8 +11,8 @@ describe('Callbacks', function () {
       (err, result) => done(err)
     );
   });
-  it('Should fire the update callback', function (done) {
-    const _id = RedisCollection.insert({ game: 'darts-2' });
+  it('Should fire the update callback', async function (done) {
+    const _id = await RedisCollection.insertAsync({ game: 'darts-2' });
     RedisCollection.update(
       { _id },
       { $set: { title: 'newtitle' } },
@@ -20,8 +20,9 @@ describe('Callbacks', function () {
       (err, result) => done(err)
     );
   });
-  it('Should fire the remove callback', function (done) {
-    const { _id } = RedisCollection.findOne({ game: 'darts' }) || {};
+  it('Should fire the remove callback', async function (done) {
+    const { _id } =
+      (await RedisCollection.findOneAsync({ game: 'darts' })) || {};
     RedisCollection.remove({ _id }, (err, result) => done(err));
   });
 });
