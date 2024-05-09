@@ -10,17 +10,16 @@
  */
 
 Slingshot.Upload = function (directive, metaData) {
-
   if (!window.File || !window.FormData) {
-    throw new Error("Browser does not support HTML5 uploads");
+    throw new Error('Browser does not support HTML5 uploads');
   }
 
   var self = this,
-      loaded = new ReactiveVar(),
-      total = new ReactiveVar(),
-      status = new ReactiveVar("idle"),
-      dataUri,
-      preloaded;
+    loaded = new ReactiveVar(),
+    total = new ReactiveVar(),
+    status = new ReactiveVar('idle'),
+    dataUri,
+    preloaded;
 
   function buildFormData() {
     var formData = new window.FormData();
@@ -29,13 +28,12 @@ Slingshot.Upload = function (directive, metaData) {
       formData.append(field.name, field.value);
     });
 
-    formData.append("file", self.file);
+    formData.append('file', self.file);
 
     return formData;
   }
 
   _.extend(self, {
-
     /**
      * @returns {string}
      */
@@ -60,21 +58,21 @@ Slingshot.Upload = function (directive, metaData) {
       return loaded.get();
     },
 
-   /**
-    * @param {File} file
-    * @returns {null|Error} Returns null on success, Error on failure.
-    */
+    /**
+     * @param {File} file
+     * @returns {null|Error} Returns null on success, Error on failure.
+     */
 
-    validate: function(file) {
+    validate: function (file) {
       var context = {
-        userId: Meteor.userId && Meteor.userId()
+        userId: Meteor.userId && Meteor.userId(),
       };
       try {
         var validators = Slingshot.Validators,
-            restrictions = Slingshot.getRestrictions(directive);
+          restrictions = Slingshot.getRestrictions(directive);
 
         validators.checkAll(context, file, metaData, restrictions) && null;
-      } catch(error) {
+      } catch (error) {
         return error;
       }
     },
@@ -86,8 +84,8 @@ Slingshot.Upload = function (directive, metaData) {
      */
 
     send: function (file, callback) {
-      if (! (file instanceof window.File) && ! (file instanceof window.Blob))
-        throw new Error("Not a file");
+      if (!(file instanceof window.File) && !(file instanceof window.Blob))
+        throw new Error('Not a file');
 
       self.file = file;
 
@@ -110,27 +108,31 @@ Slingshot.Upload = function (directive, metaData) {
      */
 
     request: function (callback) {
-
       if (!self.file) {
-        callback(new Error("No file to request upload for"));
+        callback(new Error('No file to request upload for'));
       }
 
-      var file = _.pick(self.file, "name", "size", "type");
+      var file = _.pick(self.file, 'name', 'size', 'type');
 
-      status.set("authorizing");
+      status.set('authorizing');
 
       var error = this.validate(file);
       if (error) {
-        status.set("failed");
+        status.set('failed');
         callback(error);
         return self;
       }
 
-      Meteor.call("slingshot/uploadRequest", directive,
-        file, metaData, function (error, instructions) {
-          status.set(error ? "failed" : "authorized");
+      Meteor.call(
+        'slingshot/uploadRequest',
+        directive,
+        file,
+        metaData,
+        function (error, instructions) {
+          status.set(error ? 'failed' : 'authorized');
           callback(error, instructions);
-        });
+        }
+      );
 
       return self;
     },
@@ -142,53 +144,59 @@ Slingshot.Upload = function (directive, metaData) {
      */
 
     transfer: function (callback) {
-      if (status.curValue !== "authorized") {
-        throw new Error("Cannot transfer file at upload status: " +
-          status.curValue);
+      if (status.curValue !== 'authorized') {
+        throw new Error(
+          'Cannot transfer file at upload status: ' + status.curValue
+        );
       }
 
-      status.set("transferring");
+      status.set('transferring');
       loaded.set(0);
 
       var xhr = new XMLHttpRequest();
 
-      xhr.upload.addEventListener("progress", function (event) {
-        if (event.lengthComputable) {
-          loaded.set(event.loaded);
-          total.set(event.total);
-        }
-      }, false);
+      xhr.upload.addEventListener(
+        'progress',
+        function (event) {
+          if (event.lengthComputable) {
+            loaded.set(event.loaded);
+            total.set(event.total);
+          }
+        },
+        false
+      );
 
       function getError() {
-        return new Meteor.Error(xhr.statusText + " - " + xhr.status,
-            "Failed to upload file to cloud storage");
+        return new Meteor.Error(
+          xhr.statusText + ' - ' + xhr.status,
+          'Failed to upload file to cloud storage'
+        );
       }
 
-      xhr.addEventListener("load", function () {
-
+      xhr.addEventListener('load', function () {
         if (xhr.status < 400) {
-          status.set("done");
+          status.set('done');
           loaded.set(total.get());
           callback(null, self.instructions.download);
-        }
-        else {
-          status.set("failed");
+        } else {
+          status.set('failed');
           callback(getError());
         }
       });
 
-      xhr.addEventListener("error", function () {
-        status.set("failed");
+      xhr.addEventListener('error', function () {
+        status.set('failed');
         callback(getError());
       });
 
-      xhr.addEventListener("abort", function () {
-        status.set("aborted");
-        callback(new Meteor.Error("Aborted",
-          "The upload has been aborted by the user"));
+      xhr.addEventListener('abort', function () {
+        status.set('aborted');
+        callback(
+          new Meteor.Error('Aborted', 'The upload has been aborted by the user')
+        );
       });
 
-      xhr.open("POST", self.instructions.upload, true);
+      xhr.open('POST', self.instructions.upload, true);
 
       _.each(self.instructions.headers, function (value, key) {
         xhr.setRequestHeader(key, value);
@@ -206,7 +214,7 @@ Slingshot.Upload = function (directive, metaData) {
 
     isImage: function () {
       self.status(); //React to status change.
-      return Boolean(self.file && self.file.type.split("/")[0] === "image");
+      return Boolean(self.file && self.file.type.split('/')[0] === 'image');
     },
 
     /**
@@ -220,12 +228,11 @@ Slingshot.Upload = function (directive, metaData) {
     url: function (preload) {
       if (!dataUri) {
         var localUrl = new ReactiveVar(),
-            URL = (window.URL || window.webkitURL);
+          URL = window.URL || window.webkitURL;
 
         dataUri = new ReactiveVar();
 
         Tracker.nonreactive(function () {
-
           /*
            It is important that we generate the local url not more than once
            throughout the entire lifecycle of `self` to prevent flickering.
@@ -238,15 +245,13 @@ Slingshot.Upload = function (directive, metaData) {
               if (URL) {
                 localUrl.set(URL.createObjectURL(self.file));
                 computation.stop();
-              }
-              else if (Tracker.active && window.FileReader) {
+              } else if (Tracker.active && window.FileReader) {
                 readDataUrl(self.file, function (result) {
                   localUrl.set(result);
                   computation.stop();
                 });
               }
-            }
-            else {
+            } else {
               previewRequirement.depend();
             }
           });
@@ -254,14 +259,12 @@ Slingshot.Upload = function (directive, metaData) {
           Tracker.autorun(function (computation) {
             var status = self.status();
 
-            if (self.instructions && status === "done") {
+            if (self.instructions && status === 'done') {
               computation.stop();
               dataUri.set(self.instructions.download);
-            }
-            else if (status === "failed" || status === "aborted") {
+            } else if (status === 'failed' || status === 'aborted') {
               computation.stop();
-            }
-            else if (self.file && !dataUri.curValue) {
+            } else if (self.file && !dataUri.curValue) {
               previewRequirement.changed();
               dataUri.set(localUrl.get());
             }
@@ -270,9 +273,8 @@ Slingshot.Upload = function (directive, metaData) {
       }
 
       if (preload) {
-
         if (self.file && !self.isImage())
-          throw new Error("Cannot pre-load anything other than images");
+          throw new Error('Cannot pre-load anything other than images');
 
         if (!preloaded) {
           Tracker.nonreactive(function () {
@@ -286,17 +288,13 @@ Slingshot.Upload = function (directive, metaData) {
                   computation.stop();
                   preloaded.set(url);
                 });
-              }
-              else
-                preloaded.set(url);
+              } else preloaded.set(url);
             });
           });
         }
 
         return preloaded.get();
-      }
-      else
-        return dataUri.get();
+      } else return dataUri.get();
     },
 
     /** Gets an upload parameter for the directive.
@@ -309,11 +307,10 @@ Slingshot.Upload = function (directive, metaData) {
       self.status(); //React to status changes.
 
       var data = self.instructions && self.instructions.postData,
-          field = data && _.findWhere(data, {name: name});
+        field = data && _.findWhere(data, { name: name });
 
       return field && field.value;
-    }
-
+    },
   });
 };
 

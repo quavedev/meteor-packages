@@ -1,20 +1,17 @@
-
 /**
  * @constructor
  */
 
 Slingshot.StoragePolicy = function () {
-
   /**
    * @type {{[expiration]: String, conditions: Array.<(Object|Array)>}}
    */
 
-  var policy = {conditions: []};
+  var policy = { conditions: [] };
 
   var self = this;
 
   _.extend(self, {
-
     /** Set policy expiration time (as an absolute value).
      *
      * Subsequent calls override previous expiration values.
@@ -32,7 +29,6 @@ Slingshot.StoragePolicy = function () {
       return self;
     },
 
-
     /** Adds a constraint in which a property must equal a value.
      *
      * @param {(String|Object.<String, String>)} property
@@ -46,8 +42,7 @@ Slingshot.StoragePolicy = function () {
         _.each(property, function (value, property) {
           self.match(property, value);
         });
-      }
-      else if (property && !_.isUndefined(value)) {
+      } else if (property && !_.isUndefined(value)) {
         var constraint = {};
 
         constraint[property] = value;
@@ -79,7 +74,7 @@ Slingshot.StoragePolicy = function () {
      */
 
     startsWith: function (field, constraint) {
-      policy.conditions.push(["starts-with", "$" + field, constraint]);
+      policy.conditions.push(['starts-with', '$' + field, constraint]);
       return self;
     },
 
@@ -91,7 +86,7 @@ Slingshot.StoragePolicy = function () {
      */
 
     contentLength: function (minimum, maximum) {
-      policy.conditions.push(["content-length-range", minimum, maximum]);
+      policy.conditions.push(['content-length-range', minimum, maximum]);
       return self;
     },
 
@@ -101,9 +96,9 @@ Slingshot.StoragePolicy = function () {
 
     stringify: function (encoding) {
       /* global Buffer: false */
-      return Buffer(JSON.stringify(policy), "utf-8")
-        .toString(encoding || "base64");
-    }
+      return Buffer(JSON.stringify(policy), 'utf-8').toString(
+        encoding || 'base64'
+      );
+    },
   });
 };
-

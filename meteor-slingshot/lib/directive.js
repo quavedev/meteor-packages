@@ -77,8 +77,10 @@ Slingshot.createDirective = function (name, service, options) {
   var restrictions = Slingshot.getRestrictions(name);
   _.defaults(options, restrictions);
 
-  return (Slingshot._directives[name] =
-    new Slingshot.Directive(service, options));
+  return (Slingshot._directives[name] = new Slingshot.Directive(
+    service,
+    options
+  ));
 };
 
 /**
@@ -108,16 +110,22 @@ Slingshot.Directive = function (service, directive) {
 
   _.defaults(directive, service.directiveDefault);
 
-  check(directive, _.extend({
-    authorize: Function,
-    maxSize: Match.Where(function (size) {
-      check(size, Match.OneOf(Number, null));
+  check(
+    directive,
+    _.extend(
+      {
+        authorize: Function,
+        maxSize: Match.Where(function (size) {
+          check(size, Match.OneOf(Number, null));
 
-      return !size || size > 0 && size <= (service.maxSize || Infinity);
-    }),
-    allowedFileTypes: matchAllowedFileTypes,
-    cdn: Match.Optional(String)
-  }, service.directiveMatch));
+          return !size || (size > 0 && size <= (service.maxSize || Infinity));
+        }),
+        allowedFileTypes: matchAllowedFileTypes,
+        cdn: Match.Optional(String),
+      },
+      service.directiveMatch
+    )
+  );
 
   /**
    * @method storageService
@@ -137,7 +145,6 @@ Slingshot.Directive = function (service, directive) {
 };
 
 _.extend(Slingshot.Directive.prototype, {
-
   /**
    * @param {{userId: String}} method
    * @param {FileInfo} file
@@ -147,44 +154,51 @@ _.extend(Slingshot.Directive.prototype, {
    */
 
   getInstructions: function (method, file, meta) {
-    var instructions = this.storageService().upload(method, this._directive,
-      file, meta);
+    var instructions = this.storageService().upload(
+      method,
+      this._directive,
+      file,
+      meta
+    );
 
     check(instructions, {
       upload: String,
       download: String,
-      postData: [{
-        name: String,
-        value: Match.OneOf(String, Number, null)
-      }],
-      headers: Match.Optional(Object)
+      postData: [
+        {
+          name: String,
+          value: Match.OneOf(String, Number, null),
+        },
+      ],
+      headers: Match.Optional(Object),
     });
 
     return instructions;
   },
 
- /**
-  *
-  * @method requestAuthorization
-  *
-  * @throws Meteor.Error
-  *
-  * @param {Object} context
-  * @param {FileInfo} file
-  * @param {Object} [meta]
-  *
-  * @returns {Boolean}
-  */
+  /**
+   *
+   * @method requestAuthorization
+   *
+   * @throws Meteor.Error
+   *
+   * @param {Object} context
+   * @param {FileInfo} file
+   * @param {Object} [meta]
+   *
+   * @returns {Boolean}
+   */
 
   requestAuthorization: function (context, file, meta) {
     var validators = Slingshot.Validators,
-        restrictions = _.pick(this._directive,
-          ['authorize', 'maxSize', 'allowedFileTypes']
-        );
+      restrictions = _.pick(this._directive, [
+        'authorize',
+        'maxSize',
+        'allowedFileTypes',
+      ]);
 
     return validators.checkAll(context, file, meta, restrictions);
-  }
-
+  },
 });
 
 Meteor.methods({
@@ -198,39 +212,44 @@ Meteor.methods({
    * @returns {UploadInstructions}
    */
 
-  "slingshot/uploadRequest": function (directiveName, file, meta) {
+  'slingshot/uploadRequest': function (directiveName, file, meta) {
     check(directiveName, String);
     check(file, {
-      type: Match.Optional(Match.Where(function (type) {
-        check(type, String);
-        return !type || /^[^\/]+\/[^\/]+$/.test(type);
-      })),
+      type: Match.Optional(
+        Match.Where(function (type) {
+          check(type, String);
+          return !type || /^[^\/]+\/[^\/]+$/.test(type);
+        })
+      ),
       name: Match.Optional(String),
       size: Match.Where(function (size) {
         check(size, Number);
         return size >= 0;
-      })
+      }),
     });
 
-    if (!file.type)
-      delete file.type;
+    if (!file.type) delete file.type;
 
     check(meta, Match.Optional(Match.OneOf(Object, null)));
 
     var directive = Slingshot.getDirective(directiveName);
 
     if (!directive) {
-      throw new Meteor.Error("Invalid directive",
-        "The directive " + directiveName + " does not seem to exist");
+      throw new Meteor.Error(
+        'Invalid directive',
+        'The directive ' + directiveName + ' does not seem to exist'
+      );
     }
 
     if (!directive.requestAuthorization(this, file, meta)) {
-      throw new Meteor.Error("Unauthorized", "You are not allowed to " +
-        "upload this file");
+      throw new Meteor.Error(
+        'Unauthorized',
+        'You are not allowed to ' + 'upload this file'
+      );
     }
 
     return directive.getInstructions(this, file, meta);
-  }
+  },
 });
 
 function quoteString(string, quotes) {

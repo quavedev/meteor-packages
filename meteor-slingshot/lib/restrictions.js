@@ -28,7 +28,7 @@ Slingshot.fileRestrictions = function (name, restrictions) {
   check(restrictions, {
     authorize: Match.Optional(Function),
     maxSize: Match.Optional(Match.OneOf(Number, null)),
-    allowedFileTypes: Match.Optional(matchAllowedFileTypes)
+    allowedFileTypes: Match.Optional(matchAllowedFileTypes),
   });
 
   if (Meteor.isServer) {
@@ -38,8 +38,10 @@ Slingshot.fileRestrictions = function (name, restrictions) {
     }
   }
 
-  return (Slingshot._restrictions[name] =
-    _.extend(Slingshot._restrictions[name] || {}, restrictions));
+  return (Slingshot._restrictions[name] = _.extend(
+    Slingshot._restrictions[name] || {},
+    restrictions
+  ));
 };
 
 /**

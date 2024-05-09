@@ -1,5 +1,4 @@
-meteor-slingshot
-================
+# meteor-slingshot
 
 [![](https://api.travis-ci.org/CulturalMe/meteor-slingshot.svg)](https://travis-ci.org/CulturalMe/meteor-slingshot) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/CulturalMe/meteor-slingshot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -112,10 +111,17 @@ storage service as described in a section below.
 You can create file upload progress bars as follows:
 
 ```handlebars
-<template name="progressBar">
-  <div class="progress">
-    <div class="progress-bar" role="progressbar" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{progress}}%;">
-      <span class="sr-only">{{progress}}% Complete</span>
+<template name='progressBar'>
+  <div class='progress'>
+    <div
+      class='progress-bar'
+      role='progressbar'
+      aria-valuenow='{{progress}}'
+      aria-valuemin='0'
+      aria-valuemax='100'
+      style='width: {{progress}}%;'
+    >
+      <span class='sr-only'>{{progress}}% Complete</span>
     </div>
   </div>
 </template>
@@ -134,8 +140,8 @@ Template.progressBar.helpers({
 ## Show uploaded file before it is uploaded (latency compensation)
 
 ```handlebars
-<template name="myPicture">
-  <img src={{url}}/>
+<template name='myPicture'>
+  <img src={{url}} />
 </template>
 ```
 
@@ -190,7 +196,8 @@ Slingshot.createDirective("picturealbum", Slingshot.GoogleCloud, {
   }
 });
 ```
-## Manual Client Side  validation
+
+## Manual Client Side validation
 
 You can check if a file uploadable according to file-restrictions as follows:
 
@@ -205,7 +212,6 @@ if (error) {
 
 The validate method will return `null` if valid and returns an `Error` instance
 if validation fails.
-
 
 ### AWS S3
 
@@ -303,6 +309,7 @@ line to your server-side code:
 ```JavaScript
 Slingshot.GoogleCloud.directiveDefault.GoogleSecretKey = Assets.getText('google-cloud-service-key.pem');
 ```
+
 Declare Google Cloud Storage Directives as follows:
 
 ```JavaScript
@@ -354,10 +361,9 @@ curl -I -X POST -H 'X-Auth-Token: yourAuthToken' \
   https://storage101.containerRegion.clouddrive.com/v1/MossoCloudFS_yourAccoountNumber/yourContainer
 ```
 
-
 ### Cloudinary
 
-Cloudinary is supported via a 3rd party package.  
+Cloudinary is supported via a 3rd party package.
 [jimmiebtlr:cloudinary](https://atmospherejs.com/jimmiebtlr/slingshot-cloudinary)
 
 ## Browser Compatibility
@@ -483,10 +489,10 @@ Slingshot.createDirective("myUploads", MyStorageService, {
 
 Meteor core packages:
 
- * underscore
- * tracker
- * reactive-var
- * check
+- underscore
+- tracker
+- reactive-var
+- check
 
 ## Troubleshooting and Help
 
@@ -550,8 +556,8 @@ time in milli-seconds and it returns an object that contains `AccessKeyId`,
 `Meteor.settings.S3Bucket`.
 
 `bucketUrl` String or Function (optional) - Override URL to which files are
- uploaded. If it is a function, then the first argument is the bucket name. This
- url also used for downloads unless a cdn is given.
+uploaded. If it is a function, then the first argument is the bucket name. This
+url also used for downloads unless a cdn is given.
 
 `key` String or Function (**required**) - Name of the file on the cloud storage
 service. If a function is provided, it will be called with `userId` in the
