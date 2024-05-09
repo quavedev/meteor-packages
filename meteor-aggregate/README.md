@@ -1,34 +1,32 @@
 [![](https://api.travis-ci.org/meteorhacks/meteor-aggregate.svg)](https://travis-ci.org/meteorhacks/meteor-aggregate)
 
-# maintained fork of meteorhacks:aggregate
+### Migrated from sakulstra:aggregate
+Quave version is compatible with Meteor 3.0 and forward.
 
-A simple package to add proper aggregation support for Meteor. This package exposes `.aggregate` method on `Mongo.Collection` instances.
+To migrate you can simply run
+
+```shell
+meteor remove sakulstra:aggregate && meteor add quave:aggregate
+```
 
 > this only works on server side and there is no oberserving support or reactivity built in
 
 ## Usage
 
-Add to your app with
-
-```
-meteor add sakulstra:aggregate
-```
-
-Then simply use `.aggregate` function like below.
+Simply use `.aggregate` function like below.
 
 ```js
-var metrics = new Mongo.Collection('metrics');
-var pipeline = [{ $group: { _id: null, resTime: { $sum: '$resTime' } } }];
-var result = metrics.aggregate(pipeline);
+const metrics = new Mongo.Collection('metrics');
+const pipeline = [{ $group: { _id: null, resTime: { $sum: '$resTime' } } }];
+const result = await metrics.aggregate(pipeline);
 ```
 
 ### Using Options
 
 ```js
-var result = new Mongo.Collection('metrics');
-var metrics = new Mongo.Collection('metrics');
-var pipeline = [{ $group: { _id: null, resTime: { $sum: '$resTime' } } }];
-var result = metrics.aggregate(pipeline, { explain: true });
+const metrics = new Mongo.Collection('metrics');
+const pipeline = [{ $group: { _id: null, resTime: { $sum: '$resTime' } } }];
+const result = await metrics.aggregate(pipeline, { explain: true });
 console.log('Explain Report:', JSON.stringify(result[0]), null, 2);
 ```
 

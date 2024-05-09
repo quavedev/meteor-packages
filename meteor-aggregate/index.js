@@ -1,22 +1,21 @@
-wrapAsync = Meteor.wrapAsync || Meteor._wrapAsync;
-
-Mongo.Collection.prototype.aggregate = function (pipelines, options) {
-  let coll;
-  if (this.rawCollection) {
-    // >= Meteor 1.0.4
-    coll = this.rawCollection();
-  } else {
-    // < Meteor 1.0.4
-    coll = this._getCollection();
-  }
-  if (MongoInternals.NpmModules.mongodb.version[0] === '3') {
-    const cursor = wrapAsync(coll.aggregate, coll)(pipelines, options);
-    return wrapAsync(cursor.toArray, cursor)();
-  }
-  if (MongoInternals.NpmModules.mongodb.version[0] === '4') {
-    const cursor = coll.aggregate(pipelines, options);
-    return wrapAsync(cursor.toArray, cursor)();
+Mongo.Collection.prototype.aggregateAsync = async function (
+  pipelines,
+  options
+) {
+  const rawCollection = this.rawCollection();
+  if (!rawCollection) {
+    throw new Meteor.Error(
+      'aggregate-error',
+      `Raw collection not found for ${this._name}`
+    );
   }
 
-  return wrapAsync(coll.aggregate.bind(coll))(pipelines, options);
+  return rawCollection.aggregate(pipelines, options).toArray();
+};
+
+Mongo.Collection.prototype.aggregate = function (pipeline, options) {
+  return Meteor.wrapFn(Mongo.Collection.prototype.aggregateAsync.bind(this))(
+    pipeline,
+    options
+  );
 };

@@ -1,8 +1,8 @@
 Package.describe({
   summary: 'Proper MongoDB aggregations support for Meteor',
-  version: '1.4.4',
-  git: 'https://github.com/sakulstra/meteor-aggregate',
-  name: 'sakulstra:aggregate',
+  version: '2.0.0',
+  git: 'https://github.com/quavedev/meteor-packages/',
+  name: 'quave:aggregate',
 });
 
 Package.onUse(function (api) {
@@ -18,7 +18,7 @@ Package.onTest(function (api) {
 });
 
 function configurePackage(api) {
-  api.versionsFrom('METEOR@1');
+  api.versionsFrom(['METEOR@2.12', '3.0-rc.0']);
   api.use(['mongo'], ['server']);
 
   // common before
