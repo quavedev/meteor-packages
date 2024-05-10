@@ -1,18 +1,19 @@
 # meteor-slingshot
 
-[![](https://api.travis-ci.org/CulturalMe/meteor-slingshot.svg)](https://travis-ci.org/CulturalMe/meteor-slingshot) [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/CulturalMe/meteor-slingshot?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+### Migrated from edgee:slingshot
+Quave version is compatible with Meteor 3.0 and forward.
+
+To migrate you can simply run
+
+```shell
+meteor remove edgee:slingshot && meteor add quave:slingshot
+```
 
 Direct and secure file-uploads to AWS S3, Google Cloud Storage and others.
 
-## Install
-
-```bash
-meteor add edgee:slingshot
-```
-
 ## Why?
 
-There are many many packages out there that allow file uploads to S3,
+There are many packages out there that allow file uploads to S3,
 Google Cloud and other cloud storage services, but they usually rely on the
 meteor apps' server to relay the files to the cloud service, which puts the
 server under unnecessary load.
@@ -22,7 +23,7 @@ browser without ever exposing your secret access key or any other sensitive data
 to the client and without requiring public write access to cloud storage to the
 entire public.
 
-<img src="https://cdn.rawgit.com/CulturalMe/meteor-slingshot/master/docs/slingshot.png"/>
+<img src="./docs/slingshot.png"/>
 
 File uploads can not only be restricted by file-size and file-type, but also by
 other stateful criteria such as the current meteor user.
@@ -34,7 +35,7 @@ other stateful criteria such as the current meteor user.
 On the client side we can now upload files through to the bucket:
 
 ```JavaScript
-var uploader = new Slingshot.Upload("myFileUploads");
+const uploader = new Slingshot.Upload("myFileUploads");
 
 uploader.send(document.getElementById('input').files[0], function (error, downloadUrl) {
   if (error) {
@@ -47,6 +48,8 @@ uploader.send(document.getElementById('input').files[0], function (error, downlo
   }
 });
 ```
+
+Or you can use `sendPromise` instead.
 
 ### Client and Server
 
@@ -82,9 +85,9 @@ Slingshot.createDirective("myFileUploads", Slingshot.S3Storage, {
     return true;
   },
 
-  key: function (file) {
+  key: async function (file) {
     //Store file into a directory by the user's username.
-    var user = Meteor.users.findOne(this.userId);
+    var user = await Meteor.users.findOneAsync(this.userId);
     return user.username + "/" + file.name;
   }
 });
@@ -184,8 +187,8 @@ the user is allowed post pictures to the given album:
 Slingshot.createDirective("picturealbum", Slingshot.GoogleCloud, {
   acl: "public-read",
 
-  authorize: function (file, metaContext) {
-    var album = Albums.findOne(metaContext.albumId);
+  authorize: async function (file, metaContext) {
+    var album = await Albums.findOneAsync(metaContext.albumId);
 
     //Denied if album doesn't exist or if it is not owned by the current user.
     return album && album.userId === this.userId;
@@ -204,7 +207,7 @@ You can check if a file uploadable according to file-restrictions as follows:
 ```JavaScript
 var uploader = new Slingshot.Upload("myFileUploads");
 
-var error = uploader.validate(document.getElementById('input').files[0]);
+var error = await uploader.validate(document.getElementById('input').files[0]);
 if (error) {
   console.error(error);
 }
@@ -251,32 +254,35 @@ var sts = new AWS.STS(); // Using the AWS SDK to retrieve temporary credentials.
 
 Slingshot.createDirective('myUploads', Slingshot.S3Storage.TempCredentials, {
   bucket: 'myBucket',
-  temporaryCredentials: Meteor.wrapAsync(function (expire, callback) {
+  temporaryCredentials: async function (expire) {
     //AWS dictates that the minimum duration must be 900 seconds:
     var duration = Math.max(Math.round(expire / 1000), 900);
 
-    sts.getSessionToken({
+    try {
+      const result = await sts.getSessionToken({
         DurationSeconds: duration
-    }, function (error, result) {
-      callback(error, result && result.Credentials);
-    });
-  })
+      }).promise();
+
+      const credentials = result.Credentials;
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  }
 });
 ```
 
-If you are running slingshot on an EC2 instance, you can conveniantly retreive
+If you are running slingshot on an EC2 instance, you can conveniently retrieve
 your access keys with [`AWS.EC2MetadataCredentials`](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/EC2MetadataCredentials.html):
 
 ```JavaScript
 var credentials = new AWS.EC2MetadataCredentials();
 
-var updateCredentials = Meteor.wrapAsync(credentials.get, credentials);
-
 Slingshot.createDirective('myUploads', Slingshot.S3Storage.TempCredentials, {
   bucket: 'myBucket',
-  temporaryCredentials: function () {
+  temporaryCredentials: async function () {
     if (credentials.needsRefresh()) {
-      updateCredentials();
+      await credentials.get().promise();
     }
 
     return {
@@ -307,7 +313,7 @@ Save this file into the `/private` directory of your meteor app and add this
 line to your server-side code:
 
 ```JavaScript
-Slingshot.GoogleCloud.directiveDefault.GoogleSecretKey = Assets.getText('google-cloud-service-key.pem');
+Slingshot.GoogleCloud.directiveDefault.GoogleSecretKey = await Assets.getTextAsync('google-cloud-service-key.pem');
 ```
 
 Declare Google Cloud Storage Directives as follows:
@@ -320,7 +326,7 @@ Slingshot.createDirective("google-cloud-example", Slingshot.GoogleCloud, {
 
 ### Rackspace Cloud Files
 
-You will need a`RackspaceAccountId` (your acocunt number) and
+You will need a`RackspaceAccountId` (your account number) and
 `RackspaceMetaDataKey` in `Meteor.settings`.
 
 In order to obtain your `RackspaceMetaDataKey` (a.k.a. Account-Meta-Temp-Url-Key)
@@ -344,9 +350,9 @@ Slingshot.createDirective("rackspace-files-example", Slingshot.RackspaceFiles, {
   //You must set the cdn if you want the files to be publicly accessible:
   cdn: "https://abcdefghije8c9d17810-ef6d926c15e2b87b22e15225c32e2e17.r19.cf5.rackcdn.com",
 
-  pathPrefix: function (file) {
+  pathPrefix: async function (file) {
     //Store file into a directory by the user's username.
-    var user = Meteor.users.findOne(this.userId);
+    var user = await Meteor.users.findOneAsync(this.userId);
     return user.username;
   }
 });
@@ -431,10 +437,10 @@ MyStorageService = {
    * @returns {UploadInstructions}
    */
 
-  upload: function (method, directive, file, meta) {
+  upload: async function (method, directive, file, meta) {
     var accessKey = directive.accessKey;
 
-    var fooData = directive.foo && directive.foo.call(method, file, meta);
+    var fooData = directive.foo && await directive.foo.call(method, file, meta);
 
     //Here you need to make sure that all parameters passed in the directive
     //are going to be enforced by the server receiving the file.
@@ -508,7 +514,7 @@ Bug reports, Feature Requests and Pull Requests are always welcome.
 
 #### General (All Services)
 
-`authorize`: Function (**required** unless set in File Restrictions)
+`authorize`: Function or promise (**required** unless set in File Restrictions)
 
 `maxSize`: Number (**required** unless set in File Restrictions)
 
@@ -535,8 +541,8 @@ authorization will expire after the request was made. Default is 5 minutes.
 `region` String (optional) - Default is `Meteor.settings.AWSRegion` or
 "us-east-1". [See AWS Regions](http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region)
 
-`temporaryCredentials` Function (**required**) - Function that generates temporary
-credentials. It takes a signle argument, which is the minumum desired expiration
+`temporaryCredentials` Function or promise (**required**) - Function that generates temporary
+credentials. It takes a single argument, which is the minimum desired expiration
 time in milli-seconds and it returns an object that contains `AccessKeyId`,
 `SecretAccessKey` and `SessionToken`.
 
@@ -555,11 +561,11 @@ time in milli-seconds and it returns an object that contains `AccessKeyId`,
 `Meteor.settings.GoogleCloudBucket`. For AWS S3 the default bucket is
 `Meteor.settings.S3Bucket`.
 
-`bucketUrl` String or Function (optional) - Override URL to which files are
+`bucketUrl` String or Function or promise (optional) - Override URL to which files are
 uploaded. If it is a function, then the first argument is the bucket name. This
 url also used for downloads unless a cdn is given.
 
-`key` String or Function (**required**) - Name of the file on the cloud storage
+`key` String or Function or promise (**required**) - Name of the file on the cloud storage
 service. If a function is provided, it will be called with `userId` in the
 context and its return value is used as the key. First argument is file info and
 the second is the meta-information that can be passed by the client.
@@ -568,7 +574,7 @@ the second is the meta-information that can be passed by the client.
 
 `cacheControl` String (optional) - RFC 2616 Cache-Control directive
 
-`contentDisposition` String or Function (optional) - RFC 2616
+`contentDisposition` String or Function or promise (optional) - RFC 2616
 Content-Disposition directive. Default is the uploaded file's name (inline). If
 it is a function then it takes the same context and arguments as the `key`
 function. Use null to disable.
@@ -584,7 +590,7 @@ function. Use null to disable.
 `region` String (optional) - Data Center region. The default is `"iad3"`.
 [See other regions](http://docs.rackspace.com/files/api/v1/cf-devguide/content/Service-Access-Endpoints-d1e003.html)
 
-`pathPrefix` String or Function (**required**) - Similar to `key` for S3, but
+`pathPrefix` String or Function or promise (**required**) - Similar to `key` for S3, but
 will always be appended by `file.name` that is provided by the client.
 
 `deleteAt` Date (optional) - Absolute time when the uploaded file is to be
@@ -595,7 +601,7 @@ client_
 
 ### File restrictions
 
-`authorize` Function (optional) - Function to determines if upload is allowed.
+`authorize` Function or promise (optional) - Function to determines if upload is allowed.
 
 `maxSize` Number (optional) - Maximum file-size (in bytes). Use `null` or `0`
 for unlimited.

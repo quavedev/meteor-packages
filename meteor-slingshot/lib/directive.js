@@ -153,8 +153,8 @@ _.extend(Slingshot.Directive.prototype, {
    * @returns UploadInstructions
    */
 
-  getInstructions: function (method, file, meta) {
-    var instructions = this.storageService().upload(
+  getInstructions: async function (method, file, meta) {
+    var instructions = await this.storageService().upload(
       method,
       this._directive,
       file,
@@ -189,13 +189,13 @@ _.extend(Slingshot.Directive.prototype, {
    * @returns {Boolean}
    */
 
-  requestAuthorization: function (context, file, meta) {
-    var validators = Slingshot.Validators,
-      restrictions = _.pick(this._directive, [
-        'authorize',
-        'maxSize',
-        'allowedFileTypes',
-      ]);
+  requestAuthorization: async function (context, file, meta) {
+    const validators = Slingshot.Validators;
+    const restrictions = _.pick(this._directive, [
+      'authorize',
+      'maxSize',
+      'allowedFileTypes',
+    ]);
 
     return validators.checkAll(context, file, meta, restrictions);
   },
@@ -212,7 +212,7 @@ Meteor.methods({
    * @returns {UploadInstructions}
    */
 
-  'slingshot/uploadRequest': function (directiveName, file, meta) {
+  'slingshot/uploadRequest': async function (directiveName, file, meta) {
     check(directiveName, String);
     check(file, {
       type: Match.Optional(
@@ -241,7 +241,7 @@ Meteor.methods({
       );
     }
 
-    if (!directive.requestAuthorization(this, file, meta)) {
+    if (!(await directive.requestAuthorization(this, file, meta))) {
       throw new Meteor.Error(
         'Unauthorized',
         'You are not allowed to ' + 'upload this file'

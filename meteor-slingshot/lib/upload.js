@@ -63,7 +63,7 @@ Slingshot.Upload = function (directive, metaData) {
      * @returns {null|Error} Returns null on success, Error on failure.
      */
 
-    validate: function (file) {
+    validate: async function (file) {
       var context = {
         userId: Meteor.userId && Meteor.userId(),
       };
@@ -71,7 +71,8 @@ Slingshot.Upload = function (directive, metaData) {
         var validators = Slingshot.Validators,
           restrictions = Slingshot.getRestrictions(directive);
 
-        validators.checkAll(context, file, metaData, restrictions) && null;
+        (await validators.checkAll(context, file, metaData, restrictions)) &&
+          null;
       } catch (error) {
         return error;
       }
@@ -102,6 +103,10 @@ Slingshot.Upload = function (directive, metaData) {
       return self;
     },
 
+    sendPromise: function (file) {
+      return Meteor.promisify(self.send, self)(file);
+    },
+
     /**
      * @param {Function} [callback]
      * @returns {Slingshot.Upload}
@@ -116,23 +121,24 @@ Slingshot.Upload = function (directive, metaData) {
 
       status.set('authorizing');
 
-      var error = this.validate(file);
-      if (error) {
-        status.set('failed');
-        callback(error);
-        return self;
-      }
-
-      Meteor.call(
-        'slingshot/uploadRequest',
-        directive,
-        file,
-        metaData,
-        function (error, instructions) {
-          status.set(error ? 'failed' : 'authorized');
-          callback(error, instructions);
+      this.validate(file).then((error) => {
+        if (error) {
+          status.set('failed');
+          callback(error);
+          return self;
         }
-      );
+
+        Meteor.call(
+          'slingshot/uploadRequest',
+          directive,
+          file,
+          metaData,
+          function (error, instructions) {
+            status.set(error ? 'failed' : 'authorized');
+            callback(error, instructions);
+          }
+        );
+      });
 
       return self;
     },

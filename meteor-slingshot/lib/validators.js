@@ -13,12 +13,12 @@ Slingshot.Validators = {
    * @returns {Boolean}
    */
 
-  checkAll: function (context, file, meta, restrictions) {
+  checkAll: async function (context, file, meta, restrictions) {
     return (
       this.checkFileSize(file.size, restrictions.maxSize) &&
       this.checkFileType(file.type, restrictions.allowedFileTypes) &&
       (typeof restrictions.authorize !== 'function' ||
-        restrictions.authorize.call(context, file, meta))
+        (await restrictions.authorize.call(context, file, meta)))
     );
   },
 

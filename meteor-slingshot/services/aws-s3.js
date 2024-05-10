@@ -65,7 +65,7 @@ Slingshot.S3Storage = {
     })
     .value(),
 
-  getContentDisposition: function (method, directive, file, meta) {
+  getContentDisposition: async function (method, directive, file, meta) {
     var getContentDisposition = directive.contentDisposition;
 
     if (!_.isFunction(getContentDisposition)) {
@@ -96,13 +96,13 @@ Slingshot.S3Storage = {
    * @returns {UploadInstructions}
    */
 
-  upload: function (method, directive, file, meta) {
+  upload: async function (method, directive, file, meta) {
     var policy = new Slingshot.StoragePolicy()
         .expireIn(directive.expire)
         .contentLength(0, Math.min(file.size, directive.maxSize || Infinity)),
       payload = {
         key: _.isFunction(directive.key)
-          ? directive.key.call(method, file, meta)
+          ? await directive.key.call(method, file, meta)
           : directive.key,
 
         bucket: directive.bucket,
@@ -111,7 +111,7 @@ Slingshot.S3Storage = {
         acl: directive.acl,
 
         'Cache-Control': directive.cacheControl,
-        'Content-Disposition': this.getContentDisposition(
+        'Content-Disposition': await this.getContentDisposition(
           method,
           directive,
           file,
@@ -119,7 +119,7 @@ Slingshot.S3Storage = {
         ),
       },
       bucketUrl = _.isFunction(directive.bucketUrl)
-        ? directive.bucketUrl(directive.bucket, directive.region)
+        ? await directive.bucketUrl(directive.bucket, directive.region)
         : directive.bucketUrl,
       downloadUrl = [directive.cdn || bucketUrl, payload.key]
         .map(function (part) {
@@ -226,8 +226,8 @@ Slingshot.S3Storage.TempCredentials = _.defaults(
       'AWSSecretAccessKey'
     ),
 
-    applySignature: function (payload, policy, directive) {
-      var credentials = directive.temporaryCredentials(directive.expire);
+    applySignature: async function (payload, policy, directive) {
+      var credentials = await directive.temporaryCredentials(directive.expire);
 
       check(
         credentials,
