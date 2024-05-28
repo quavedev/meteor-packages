@@ -38,4 +38,4 @@ jobs:
       - name: Run Tests
         run: |
           # Retry tests since some of them are flaky
-          mtest --package ./ --once ${{ matrix.meteorRelease }} || mtest --package ./ --once ${{ matrix.meteorRelease }} 
+          mtest --package ./ --once ${{ matrix.meteorRelease }} || mtest --package ./ --once ${{ matrix.meteorRelease }}
