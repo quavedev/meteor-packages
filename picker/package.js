@@ -4,7 +4,6 @@ Package.describe({
   version: '1.2.0',
   git: 'https://github.com/quavedev/meteor-packages',
   documentation: 'README.md',
-  deprecated: false,
 });
 
 Npm.depends({
@@ -12,7 +11,7 @@ Npm.depends({
 });
 
 function configurePackage(api) {
-  api.versionsFrom(['2.12', '3.0-rc.2']);
+  api.versionsFrom(['2.12', '3.0-rc.1']);
   api.use(['webapp', 'ecmascript', 'url'], 'server');
 }
 
@@ -23,7 +22,7 @@ Package.onUse(function (api) {
 
 Package.onTest(function (api) {
   configurePackage(api);
-  api.use('communitypackages:picker', 'server');
+  api.use('quave:picker', 'server');
   api.use(['tinytest', 'fetch', 'random'], 'server');
   api.mainModule('test/instance.js', 'server');
 });

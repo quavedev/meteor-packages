@@ -1,6 +1,4 @@
 import { pathToRegexp } from 'path-to-regexp';
-// TODO remove fibers
-import Fiber from 'fibers';
 
 function parseQuery(queryString) {
   if (!queryString) return {};
@@ -122,27 +120,9 @@ PickerImp.prototype._processRoute = function (
   res,
   next
 ) {
-  if (Fiber.current) {
-    doCall();
-  } else {
-    new Fiber(doCall).run();
-  }
-
-  function doCall() {
-    callback.call(null, params, req, res, next);
-  }
-  // callback.call(null, params, req, res, next);
+  Meteor.bindEnvironment(callback, null)(params, req, res, next);
 };
 
 PickerImp.prototype._processMiddleware = function (middleware, req, res, next) {
-  if (Fiber.current) {
-    doCall();
-  } else {
-    new Fiber(doCall).run();
-  }
-
-  function doCall() {
-    middleware.call(null, req, res, next);
-  }
-  // middleware.call(null, req, res, next);
+  Meteor.bindEnvironment(middleware, null)(req, res, next);
 };
