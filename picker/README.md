@@ -2,15 +2,20 @@
 
 Picker is an easy to use server side router for Meteor. This router respect others. So, you can use Iron Router and other routers and middlewares along side with this.
 
-## DEPRECATED
+## Migrated from communitypackages:picker
 
-As of Meteor 3, Picker is deprecated as the functionality that has been provided by
-it is now part of Meteor itself and the Express server that is baked into it.
+Quave version is compatible with Meteor 3.0 and forward.
 
-## Install
+To migrate you can simply run
 
+``` sh
+$ meteor remove communitypackages:picker && meteor add quave:picker
 ```
-meteor add communitypackages:picker
+
+## Installation
+
+``` sh
+meteor add quave:picker
 ```
 
 ## Getting Started

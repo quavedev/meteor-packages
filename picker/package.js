@@ -1,10 +1,10 @@
 Package.describe({
-  name: 'communitypackages:picker',
+  name: 'quave:picker',
   summary: 'Server Side Router for Meteor',
   version: '1.2.0',
-  git: 'https://github.com/Meteor-Community-Packages/picker.git',
+  git: 'https://github.com/quavedev/meteor-packages',
   documentation: 'README.md',
-  deprecated: true,
+  deprecated: false,
 });
 
 Npm.depends({
@@ -12,7 +12,7 @@ Npm.depends({
 });
 
 function configurePackage(api) {
-  api.versionsFrom(['1.9']);
+  api.versionsFrom(['2.12', '3.0-rc.2']);
   api.use(['webapp', 'ecmascript', 'url'], 'server');
 }
 
