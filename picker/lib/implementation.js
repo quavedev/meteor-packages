@@ -1,5 +1,11 @@
 import { pathToRegexp } from 'path-to-regexp';
 
+function wrapFn(fn, ctx) {
+  return !!Promise.asyncApply
+    ? (...args) => Promise.asyncApply(fn, ctx, args)
+    : fn.bind(ctx);
+}
+
 function parseQuery(queryString) {
   if (!queryString) return {};
   let query = {};
@@ -120,9 +126,9 @@ PickerImp.prototype._processRoute = function (
   res,
   next
 ) {
-  Meteor.bindEnvironment(callback, null)(params, req, res, next);
+  wrapFn(callback, null)(params, req, res, next);
 };
 
 PickerImp.prototype._processMiddleware = function (middleware, req, res, next) {
-  Meteor.bindEnvironment(middleware, null)(req, res, next);
+  wrapFn(middleware, null)(req, res, next);
 };
