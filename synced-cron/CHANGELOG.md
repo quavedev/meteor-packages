@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.6 (2024-05-31)
+
+- Remove `SyncedCron.setCollectionOptions`
+
 ## 2.0.5 (2024-05-31)
 
 - Add `SyncedCron.setCollectionOptions` to pass options to the collection that is created

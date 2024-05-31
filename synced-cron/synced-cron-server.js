@@ -375,9 +375,4 @@ SyncedCron.run = function (name) {
     SyncedCron._entryWrapper(entry)(new Date());
   }
 };
-
-// This should be run outside startup calls
-SyncedCron.setCollectionOptions = function (collectionOptions) {
-  SyncedCron.options.collectionOptions = collectionOptions;
-};
 // ---------------------------------------------------------------------------
