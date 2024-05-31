@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5 (2024-05-31)
+
+- Add `SyncedCron.setCollectionOptions` to pass options to the collection that is created
+
 ## 2.0.4 (2024-05-25)
 
 - Fix version with new Meteor@3.0-rc.2

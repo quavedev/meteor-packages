@@ -10,6 +10,7 @@ SyncedCron = {
 
     //Name of collection to use for synchronisation and logging
     collectionName: 'cronHistory',
+    collectionOptions: {},
 
     //Default to using localTime
     utc: false,
@@ -87,7 +88,11 @@ Meteor.startup(async function syncedCronStartup() {
   else Later.date.localTime();
 
   // collection holding the job history records
-  SyncedCron._collection = new Mongo.Collection(options.collectionName);
+  SyncedCron._collection = new Mongo.Collection(
+    options.collectionName,
+    options.collectionOptions
+  );
+
   await SyncedCron._collection.createIndexAsync(
     { intendedAt: 1, name: 1 },
     { unique: true }
@@ -369,5 +374,10 @@ SyncedCron.run = function (name) {
   if (entry) {
     SyncedCron._entryWrapper(entry)(new Date());
   }
+};
+
+// This should be run outside startup calls
+SyncedCron.setCollectionOptions = function (collectionOptions) {
+  SyncedCron.options.collectionOptions = collectionOptions;
 };
 // ---------------------------------------------------------------------------
