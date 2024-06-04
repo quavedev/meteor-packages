@@ -1,23 +1,21 @@
-import { Meteor } from 'meteor/meteor'
-import { Tracker } from 'meteor/tracker'
-import { CollectionHooks } from './collection-hooks.js'
+import { Meteor } from 'meteor/meteor';
+import { Tracker } from 'meteor/tracker';
+import { CollectionHooks } from './collection-hooks.js';
 
-import './advices'
+import './advices';
 
-CollectionHooks.getUserId = function getUserId () {
-  let userId
+CollectionHooks.getUserId = function getUserId() {
+  let userId;
 
   Tracker.nonreactive(() => {
-    userId = Meteor.userId && Meteor.userId()
-  })
+    userId = Meteor.userId && Meteor.userId();
+  });
 
   if (userId == null) {
-    userId = CollectionHooks.defaultUserId
+    userId = CollectionHooks.defaultUserId;
   }
 
-  return userId
-}
+  return userId;
+};
 
-export {
-  CollectionHooks
-}
+export { CollectionHooks };

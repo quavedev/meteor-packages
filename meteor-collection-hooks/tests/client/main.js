@@ -1,2 +1,2 @@
-import './insecure_login'
-import '../common'
+import './insecure_login';
+import '../common';

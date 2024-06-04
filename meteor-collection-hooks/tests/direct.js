@@ -1,5 +1,5 @@
-import { Meteor } from 'meteor/meteor'
-import { Mongo } from 'meteor/mongo'
+import { Meteor } from 'meteor/meteor';
+import { Mongo } from 'meteor/mongo';
 import { Tinytest } from 'meteor/tinytest';
 
 // XXX: Code below throws
@@ -123,38 +123,53 @@ import { Tinytest } from 'meteor/tinytest';
 
 [{}, { connection: null }].forEach(function (conntype, i) {
   [null, 'direct_collection_test_stringid'].forEach(function (ctype) {
-    const cname = ctype && (ctype + i)
-    Tinytest.add(`direct - update and remove should allow removing by _id string (${cname}, ${JSON.stringify(conntype)})`, function (test) {
-      const collection = new Mongo.Collection(cname, conntype)
+    const cname = ctype && ctype + i;
+    Tinytest.add(
+      `direct - update and remove should allow removing by _id string (${cname}, ${JSON.stringify(conntype)})`,
+      function (test) {
+        const collection = new Mongo.Collection(cname, conntype);
 
-      // Full permissions on collection
-      collection.allow({
-        insert: function () { return true },
-        update: function () { return true },
-        remove: function () { return true }
-      })
+        // Full permissions on collection
+        collection.allow({
+          insert: function () {
+            return true;
+          },
+          update: function () {
+            return true;
+          },
+          remove: function () {
+            return true;
+          },
+        });
 
-      function hasCountAndTestValue (count, value) {
-        const cursor = collection.direct.find({ _id: 'testid', test: value })
-        test.equal(cursor.count(), count)
+        function hasCountAndTestValue(count, value) {
+          const cursor = collection.direct.find({ _id: 'testid', test: value });
+          test.equal(cursor.count(), count);
+        }
+
+        collection.direct.remove({ _id: 'testid' });
+        collection.direct.insert({ _id: 'testid', test: 1 });
+        hasCountAndTestValue(1, 1);
+        collection.direct.update('testid', { $set: { test: 2 } });
+        hasCountAndTestValue(1, 2);
+        collection.direct.remove('testid');
+        hasCountAndTestValue(0, 2);
       }
-
-      collection.direct.remove({ _id: 'testid' })
-      collection.direct.insert({ _id: 'testid', test: 1 })
-      hasCountAndTestValue(1, 1)
-      collection.direct.update('testid', { $set: { test: 2 } })
-      hasCountAndTestValue(1, 2)
-      collection.direct.remove('testid')
-      hasCountAndTestValue(0, 2)
-    })
-  })
-})
+    );
+  });
+});
 
 if (Meteor.isServer) {
-  Tinytest.add('direct - Meteor.users.direct.insert should return _id, not an object', function (test) {
-    Meteor.users.remove('directinserttestid')
+  Tinytest.add(
+    'direct - Meteor.users.direct.insert should return _id, not an object',
+    function (test) {
+      Meteor.users.remove('directinserttestid');
 
-    const result = Meteor.users.direct.insert({ _id: 'directinserttestid', test: 1 })
-    test.isFalse(Object(result) === result)
-  })
+      const result = Meteor.users.direct.insert({
+        _id: 'directinserttestid',
+        test: 1,
+      });
+      test.isFalse(Object(result) === result);
+    }
+  );
 }

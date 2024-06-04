@@ -4,7 +4,6 @@
 ![Code lint](https://github.com/Meteor-Community-Packages/meteor-collection-hooks/workflows/Code%20lint/badge.svg)
 ![CodeQL Analysis](https://github.com/Meteor-Community-Packages/meteor-collection-hooks/workflows/CodeQL/badge.svg)
 
-
 Extends Mongo.Collection with `before`/`after` hooks for `insert`, `update`, `remove`, `find`, and `findOne`.
 
 Works across client, server or a mix. Also works when a client initiates a collection method and the server runs the hook, all while respecting the collection validators (allow/deny).
@@ -19,7 +18,7 @@ Installation:
 meteor add matb33:collection-hooks
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .before.insert(userId, doc)
 
@@ -29,18 +28,18 @@ Allows you to modify doc as needed, or run additional
 functionality
 
 - `this.transform()` obtains transformed version of document, if a transform was
-defined.
+  defined.
 
 ```javascript
 import { Mongo } from 'meteor/mongo';
-const test = new Mongo.Collection("test");
+const test = new Mongo.Collection('test');
 
 test.before.insert(function (userId, doc) {
   doc.createdAt = Date.now();
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .before.update(userId, doc, fieldNames, modifier, options)
 
@@ -50,7 +49,7 @@ Allows you to to change the `modifier` as needed, or run additional
 functionality.
 
 - `this.transform()` obtains transformed version of document, if a transform was
-defined.
+  defined.
 
 ```javascript
 test.before.update(function (userId, doc, fieldNames, modifier, options) {
@@ -59,15 +58,15 @@ test.before.update(function (userId, doc, fieldNames, modifier, options) {
 });
 ```
 
-__Important__: 
+**Important**:
 
 1. Note that we are changing `modifier`, and not `doc`.
-Changing `doc` won't have any effect as the document is a copy and is not what
-ultimately gets sent down to the underlying `update` method.
+   Changing `doc` won't have any effect as the document is a copy and is not what
+   ultimately gets sent down to the underlying `update` method.
 
 2. When triggering a single update targeting multiple documents using the option `multi: true` (see [Meteor documentation](https://docs.meteor.com/api/collections.html#Mongo-Collection-update)), the `before.update` hook is called once per document about to be updated, **but** the collection update called afterwards remains a single update (targetting multiple documents) with a single modifier. Hence it is not possible at the time to use `before.update` to create a specific modifier for each targeted document.
 
---------------------------------------------------------------------------------
+---
 
 ### .before.remove(userId, doc)
 
@@ -77,7 +76,7 @@ Allows you to to affect your system while the document is still in
 existence -- useful for maintaining system integrity, such as cascading deletes.
 
 - `this.transform()` obtains transformed version of document, if a transform was
-defined.
+  defined.
 
 ```javascript
 test.before.remove(function (userId, doc) {
@@ -85,7 +84,7 @@ test.before.remove(function (userId, doc) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .before.upsert(userId, selector, modifier, options)
 
@@ -106,7 +105,7 @@ call either `.after.insert` or `.after.update` hooks depending on the outcome of
 the `upsert` operation. There is no such thing as a `.after.upsert` hook at this
 time.
 
---------------------------------------------------------------------------------
+---
 
 ### .after.insert(userId, doc)
 
@@ -116,7 +115,7 @@ Allows you to run post-insert tasks, such as sending notifications
 of new document insertions.
 
 - `this.transform()` obtains transformed version of document, if a transform was
-defined;
+  defined;
 - `this._id` holds the newly inserted `_id` if available.
 
 ```javascript
@@ -125,7 +124,7 @@ test.after.insert(function (userId, doc) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .after.update(userId, doc, fieldNames, modifier, options)
 
@@ -144,13 +143,16 @@ previous and new documents to take further action.
   `this.transform(this.previous)`.
 
 ```javascript
-test.after.update(function (userId, doc, fieldNames, modifier, options) {
-  // ...
-}, {fetchPrevious: true/false});
+test.after.update(
+  function (userId, doc, fieldNames, modifier, options) {
+    // ...
+  },
+  { fetchPrevious: true / false }
+);
 ```
 
-__Important:__ If you have multiple hooks defined, and at least one of them does
-*not* specify `fetchPrevious: false`, then the documents *will* be fetched
+**Important:** If you have multiple hooks defined, and at least one of them does
+_not_ specify `fetchPrevious: false`, then the documents _will_ be fetched
 and provided as `this.previous` to all hook callbacks. All after-update hooks
 for the same collection must have `fetchPrevious: false` set in order to
 effectively disable the pre-fetching of documents.
@@ -160,7 +162,7 @@ It is instead recommended to use the collection-wide options (e.g.
 
 This hook will always be called with the new documents; even if the updated document gets modified in a way were it would normally not be able to be found because of `before.find` hooks (see https://github.com/Meteor-Community-Packages/meteor-collection-hooks/pull/297).
 
---------------------------------------------------------------------------------
+---
 
 ### .after.remove(userId, doc)
 
@@ -173,7 +175,7 @@ on the document being found in the database (external service clean-up for
 instance).
 
 - `this.transform()` obtains transformed version of document, if a transform was
-defined.
+  defined.
 
 ```javascript
 test.after.remove(function (userId, doc) {
@@ -181,7 +183,7 @@ test.after.remove(function (userId, doc) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .before.find(userId, selector, options)
 
@@ -195,9 +197,9 @@ test.before.find(function (userId, selector, options) {
 });
 ```
 
-__Important:__ This hook does not get called for `after.update` hooks (see https://github.com/Meteor-Community-Packages/meteor-collection-hooks/pull/297).
+**Important:** This hook does not get called for `after.update` hooks (see https://github.com/Meteor-Community-Packages/meteor-collection-hooks/pull/297).
 
---------------------------------------------------------------------------------
+---
 
 ### .after.find(userId, selector, options, cursor)
 
@@ -212,7 +214,7 @@ test.after.find(function (userId, selector, options, cursor) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .before.findOne(userId, selector, options)
 
@@ -226,7 +228,7 @@ test.before.findOne(function (userId, selector, options) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ### .after.findOne(userId, selector, options, doc)
 
@@ -241,27 +243,27 @@ test.after.findOne(function (userId, selector, options, doc) {
 });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ## Direct access (circumventing hooks)
 
 All compatible methods have a `direct` version that circumvent any defined hooks. For example:
 
 ```javascript
-collection.direct.insert({_id: "test", test: 1});
-collection.direct.insertAsync({_id: "test", test: 1});
-collection.direct.upsert({_id: "test", test: 1});
-collection.direct.upsertAsync({_id: "test", test: 1});
-collection.direct.update({_id: "test"}, {$set: {test: 1}});
-collection.direct.updateAsync({_id: "test"}, {$set: {test: 1}});
-collection.direct.find({test: 1});
-collection.direct.findOne({test: 1});
-collection.direct.findOneAsync({test: 1});
-collection.direct.remove({_id: "test"});
-collection.direct.removeAsync({_id: "test"});
+collection.direct.insert({ _id: 'test', test: 1 });
+collection.direct.insertAsync({ _id: 'test', test: 1 });
+collection.direct.upsert({ _id: 'test', test: 1 });
+collection.direct.upsertAsync({ _id: 'test', test: 1 });
+collection.direct.update({ _id: 'test' }, { $set: { test: 1 } });
+collection.direct.updateAsync({ _id: 'test' }, { $set: { test: 1 } });
+collection.direct.find({ test: 1 });
+collection.direct.findOne({ test: 1 });
+collection.direct.findOneAsync({ test: 1 });
+collection.direct.remove({ _id: 'test' });
+collection.direct.removeAsync({ _id: 'test' });
 ```
 
---------------------------------------------------------------------------------
+---
 
 ## Default options
 
@@ -274,16 +276,16 @@ Examples (in order of least specific to most specific):
 ```javascript
 import { CollectionHooks } from 'meteor/matb33:collection-hooks';
 
-CollectionHooks.defaults.all.all = {exampleOption: 1};
+CollectionHooks.defaults.all.all = { exampleOption: 1 };
 
-CollectionHooks.defaults.before.all = {exampleOption: 2};
-CollectionHooks.defaults.after.all = {exampleOption: 3};
+CollectionHooks.defaults.before.all = { exampleOption: 2 };
+CollectionHooks.defaults.after.all = { exampleOption: 3 };
 
-CollectionHooks.defaults.all.update = {exampleOption: 4};
-CollectionHooks.defaults.all.remove = {exampleOption: 5};
+CollectionHooks.defaults.all.update = { exampleOption: 4 };
+CollectionHooks.defaults.all.remove = { exampleOption: 5 };
 
-CollectionHooks.defaults.before.insert = {exampleOption: 6};
-CollectionHooks.defaults.after.remove = {exampleOption: 7};
+CollectionHooks.defaults.before.insert = { exampleOption: 6 };
+CollectionHooks.defaults.after.remove = { exampleOption: 7 };
 ```
 
 Similarly, collection-wide options can be defined (these have a higher
@@ -291,74 +293,76 @@ specificity than the global defaults from above):
 
 ```javascript
 import { Mongo } from 'meteor/mongo';
-const testCollection = new Mongo.Collection("test");
+const testCollection = new Mongo.Collection('test');
 
-testCollection.hookOptions.all.all = {exampleOption: 1};
+testCollection.hookOptions.all.all = { exampleOption: 1 };
 
-testCollection.hookOptions.before.all = {exampleOption: 2};
-testCollection.hookOptions.after.all = {exampleOption: 3};
+testCollection.hookOptions.before.all = { exampleOption: 2 };
+testCollection.hookOptions.after.all = { exampleOption: 3 };
 
-testCollection.hookOptions.all.update = {exampleOption: 4};
-testCollection.hookOptions.all.remove = {exampleOption: 5};
+testCollection.hookOptions.all.update = { exampleOption: 4 };
+testCollection.hookOptions.all.remove = { exampleOption: 5 };
 
-testCollection.hookOptions.before.insert = {exampleOption: 6};
-testCollection.hookOptions.after.remove = {exampleOption: 7};
+testCollection.hookOptions.before.insert = { exampleOption: 6 };
+testCollection.hookOptions.after.remove = { exampleOption: 7 };
 ```
 
 _Currently (as of 0.7.0), only `fetchPrevious` is implemented as an option, and
 is only relevant to after-update hooks._
 
---------------------------------------------------------------------------------
+---
 
 ## Additional notes
 
 - Returning `false` in any `before` hook will prevent the underlying method (and
-subsequent `after` hooks) from executing. Note that all `before` hooks will
-still continue to run even if the first hook returns `false`.
+  subsequent `after` hooks) from executing. Note that all `before` hooks will
+  still continue to run even if the first hook returns `false`.
 
 - ~~If you wish to make `userId` available to a `find` query in a `publish`
-function, try the technique detailed in this [comment](https://github.com/matb33/meteor-collection-hooks/issues/7#issuecomment-24021616)~~ `userId` is available to `find` and `findOne` queries that were invoked within a `publish` function.
+  function, try the technique detailed in this [comment](https://github.com/matb33/meteor-collection-hooks/issues/7#issuecomment-24021616)~~ `userId` is available to `find` and `findOne` queries that were invoked within a `publish` function.
 
 - All hook callbacks have `this._super` available to them (the underlying
-method) as well as `this.context`, the equivalent of `this` to the underlying
-method. Additionally, `this.args` contain the original arguments passed to the
-method and can be modified by reference (for example, modifying a selector in a
-`before` hook so that the underlying method uses this new selector).
+  method) as well as `this.context`, the equivalent of `this` to the underlying
+  method. Additionally, `this.args` contain the original arguments passed to the
+  method and can be modified by reference (for example, modifying a selector in a
+  `before` hook so that the underlying method uses this new selector).
 
 - It is quite normal for `userId` to sometimes be unavailable to hook callbacks
-in some circumstances. For example, if an `update` is fired from the server
-with no user context, the server certainly won't be able to provide any
-particular userId.
+  in some circumstances. For example, if an `update` is fired from the server
+  with no user context, the server certainly won't be able to provide any
+  particular userId.
 
 - You can define a `defaultUserId` in case you want to pass an userId to the hooks but there is no context. For instance if you are executing and API endpoint where the `userId` is derived from a token. Just assign the userId to `CollectionHooks.defaultUserId`. It will be overriden by the userId of the context if it exists.
 
 - If, like me, you transform `Meteor.users` through a [round-about way](https://github.com/matb33/meteor-collection-hooks/issues/15#issuecomment-25809919) involving
-`find` and `findOne`, then you won't be able to use `this.transform()`. Instead,
-grab the transformed user with `findOne`.
+  `find` and `findOne`, then you won't be able to use `this.transform()`. Instead,
+  grab the transformed user with `findOne`.
 
 - When adding a hook, a handler object is returned with these methods:
+
   - `remove()`: will remove that particular hook;
   - `replace(callback, options)`: will replace the hook callback and options.
 
 - If your hook is defined in common code (both server and client), it will run
-twice: once on the server and once on the client. If your intention is for the
-hook to run only once, make sure the hook is defined somewhere where only either
-the client or the server reads it. *When in doubt, define your hooks on the
-server.*
+  twice: once on the server and once on the client. If your intention is for the
+  hook to run only once, make sure the hook is defined somewhere where only either
+  the client or the server reads it. _When in doubt, define your hooks on the
+  server._
 
 - Both `update` and `remove` internally make use of `find`, so be aware that
-`find`/`findOne` hooks can fire for those methods.
+  `find`/`findOne` hooks can fire for those methods.
 
 - `find` hooks are also fired when fetching documents for `update`, `upsert` and `remove` hooks.
 
-- If using the `direct` version to bypass a hook, any mongo operations done within nested 
-callbacks of the `direct` operation will also by default run as `direct`. You can use the following
-line in a nested callback before the operation to unset the `direct` setting: 
-`CollectionHooks.directEnv = new Meteor.EnvironmentVariable(false)`
+- If using the `direct` version to bypass a hook, any mongo operations done within nested
+  callbacks of the `direct` operation will also by default run as `direct`. You can use the following
+  line in a nested callback before the operation to unset the `direct` setting:
+  `CollectionHooks.directEnv = new Meteor.EnvironmentVariable(false)`
 
---------------------------------------------------------------------------------
+---
 
 ## Maintainers
+
 Maintained by [Meteor Community Packages](https://github.com/Meteor-Community-Packages) and in particular by:
 
 - Mathieu Bouchard ([matb33](https://github.com/matb33))
