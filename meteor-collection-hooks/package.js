@@ -5,7 +5,7 @@ Package.describe({
   summary:
     'Extends Mongo.Collection with before/after hooks for insert/update/upsert/remove/find/findOne',
   version: '1.3.2',
-  git: 'https://github.com/Meteor-Community-Packages/meteor-collection-hooks',
+  git: 'https://github.com/quavedev/meteor-packages',
 });
 
 Package.onUse(function (api) {
