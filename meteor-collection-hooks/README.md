@@ -10,12 +10,14 @@ Works across client, server or a mix. Also works when a client initiates a colle
 
 Please refer to [History.md](History.md) for a summary of recent changes.
 
-## Getting Started
+## Migrated from sakulstra:aggregate
+Quave version is compatible with Meteor 3.0 API (though not compatible with the actual Fibers removal).
+This versions allows you to already start migrating your hooks to async functions, and have then run in order.
 
-Installation:
+To migrate you can simply run
 
-```
-meteor add matb33:collection-hooks
+```shell
+meteor remove matb33:collection-hooks && meteor add quave:collection-hooks
 ```
 
 ---

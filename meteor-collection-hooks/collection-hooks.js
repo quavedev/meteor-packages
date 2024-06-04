@@ -55,7 +55,7 @@ CollectionHooks.extendCollectionInstance = function extendCollectionInstance(
       self._hookAspects[method][pointcut] = [];
       self[pointcut][method] = function (aspect, options) {
         let target = {
-          aspect,
+          aspect: Meteor.wrapFn(aspect),
           options: CollectionHooks.initOptions(options, pointcut, method),
         };
         // adding is simply pushing it to the array
@@ -132,7 +132,7 @@ CollectionHooks.extendCollectionInstance = function extendCollectionInstance(
       //   advice = CollectionHooks.getAdvice(method);
       // }
 
-      return advice.call(
+      return Meteor.wrapFn(advice).call(
         this,
         CollectionHooks.getUserId(),
         _super,

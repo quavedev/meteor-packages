@@ -1,7 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Tinytest } from 'meteor/tinytest';
-import { CollectionHooks } from 'meteor/matb33:collection-hooks';
+import { CollectionHooks } from 'meteor/quave:collection-hooks';
 
 Tinytest.addAsync(
   'optional-previous - update hook should not prefetch previous, via hook option param',

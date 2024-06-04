@@ -262,4 +262,37 @@ if (Mongo.Collection.prototype.insertAsync) {
 
     next();
   });
+
+  if (Meteor.isServer) {
+    Tinytest.addAsync('async advices', async (test, next) => {
+      const collection = new Mongo.Collection(null);
+
+      let callOrder = [];
+
+      collection.before.insert(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        callOrder.push('firstDefinedBeforeHook');
+      });
+
+      collection.before.insert(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        callOrder.push('secondDefinedBeforeHook');
+      });
+
+      collection.after.insert(async () => {
+        callOrder.push('firstDefinedAfterHook');
+      });
+
+      const id = await collection.insertAsync({ test: true });
+
+      test.isTrue(typeof id === 'string');
+      test.equal(callOrder, [
+        'firstDefinedBeforeHook',
+        'secondDefinedBeforeHook',
+        'firstDefinedAfterHook',
+      ]);
+
+      next();
+    });
+  }
 }

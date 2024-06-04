@@ -1,4 +1,4 @@
-declare module 'meteor/matb33:collection-hooks' {
+declare module 'meteor/quave:collection-hooks' {
   import { Meteor } from 'meteor/meteor';
   type Options = {
     fetchPrevious?: boolean;
@@ -26,7 +26,7 @@ declare module 'meteor/matb33:collection-hooks' {
 }
 
 declare module 'meteor/mongo' {
-  import { CollectionHooks } from 'meteor/matb33:collection-hooks';
+  import { CollectionHooks } from 'meteor/quave:collection-hooks';
   module Mongo {
     type GenericFunction = (...args: any) => any;
     type THookThis<T, UnderlyingMethod extends GenericFunction> = {

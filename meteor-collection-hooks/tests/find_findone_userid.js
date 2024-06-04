@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Tinytest } from 'meteor/tinytest';
 import { InsecureLogin } from './insecure_login';
-import { CollectionHooks } from 'meteor/matb33:collection-hooks';
+import { CollectionHooks } from 'meteor/quave:collection-hooks';
 
 const collection = new Mongo.Collection(
   'test_collection_for_find_findone_userid'
