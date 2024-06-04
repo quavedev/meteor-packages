@@ -1,6 +1,6 @@
 Package.describe({
   name: 'quave:profile',
-  version: '1.0.2',
+  version: '1.0.1',
   summary: 'Profile the server runtime of Meteor',
   git: 'http://github.com/quavedev/profile',
   documentation: 'README.md',
