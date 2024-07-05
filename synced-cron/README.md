@@ -28,11 +28,14 @@ To write a cron job, give it a unique name, a schedule and a function to run lik
 SyncedCron.add({
   name: 'Crunch some important numbers for the marketing department',
   schedule: function(parser) {
+    // Note that the schedule function should not return
+    // a promise. It works only with synchronous functions.
+      
     // parser is a later.parse object
     return parser.text('every 2 hours');
   },
-  job: function() {
-    crushSomeNumbers();
+  job: async function() {
+    await crushSomeNumbers();
   }
 });
 ```

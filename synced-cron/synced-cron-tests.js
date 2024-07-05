@@ -1,18 +1,20 @@
-Later = Npm.require("@breejs/later");
+Later = Npm.require('@breejs/later');
 
 Later.date.localTime(); // corresponds to SyncedCron.options.utc: true;
 
 const TestEntry = {
-  name: "Test Job",
+  name: 'Test Job',
   schedule: function (parser) {
-    return parser.cron("15 10 * * ? *"); // not required
+    return parser.cron('15 10 * * ? *'); // not required
   },
-  job: function () {
-    return "ran";
+  job: async function () {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    return 'ran';
   },
 };
 
-Tinytest.addAsync("Syncing works", async function (test) {
+Tinytest.addAsync('Syncing works', async function (test) {
   await SyncedCron._reset();
   test.equal(await SyncedCron._collection.find().countAsync(), 0);
 
@@ -27,7 +29,7 @@ Tinytest.addAsync("Syncing works", async function (test) {
   await SyncedCron._entryWrapper(entry)(intendedAt);
   test.equal(await SyncedCron._collection.find().countAsync(), 1);
   const jobHistory1 = await SyncedCron._collection.findOneAsync();
-  test.equal(jobHistory1.result, "ran");
+  test.equal(jobHistory1.result, 'ran');
 
   // second run
   await SyncedCron._entryWrapper(entry)(intendedAt);
@@ -36,14 +38,14 @@ Tinytest.addAsync("Syncing works", async function (test) {
   test.equal(jobHistory1._id, jobHistory2._id);
 });
 
-Tinytest.addAsync("Exceptions work", async function (test) {
+Tinytest.addAsync('Exceptions work', async function (test) {
   await SyncedCron._reset();
   SyncedCron.add(
     Object.assign({}, TestEntry, {
       job: function () {
-        throw new Meteor.Error("Haha, gotcha!");
+        throw new Meteor.Error('Haha, gotcha!');
       },
-    }),
+    })
   );
 
   const entry = SyncedCron._entries[TestEntry.name];
@@ -58,7 +60,7 @@ Tinytest.addAsync("Exceptions work", async function (test) {
 });
 
 Tinytest.addAsync(
-  "SyncedCron.nextScheduledAtDate works",
+  'SyncedCron.nextScheduledAtDate works',
   async function (test) {
     await SyncedCron._reset();
     test.equal(await SyncedCron._collection.find().countAsync(), 0);
@@ -67,9 +69,9 @@ Tinytest.addAsync(
     SyncedCron.add(TestEntry);
 
     const entry2 = Object.assign({}, TestEntry, {
-      name: "Test Job2",
+      name: 'Test Job2',
       schedule: function (parser) {
-        return parser.cron("30 11 * * ? *");
+        return parser.cron('30 11 * * ? *');
       },
     });
     SyncedCron.add(entry2);
@@ -82,11 +84,11 @@ Tinytest.addAsync(
     const correctDate = Later.schedule(entry2.schedule(Later.parse)).next(1);
 
     test.equal(date, correctDate);
-  },
+  }
 );
 
 // Tests SyncedCron.remove in the process
-Tinytest.addAsync("SyncedCron.stop works", async function (test) {
+Tinytest.addAsync('SyncedCron.stop works', async function (test) {
   await SyncedCron._reset();
   test.equal(await SyncedCron._collection.find().countAsync(), 0);
 
@@ -94,9 +96,9 @@ Tinytest.addAsync("SyncedCron.stop works", async function (test) {
   SyncedCron.add(TestEntry);
 
   const entry2 = Object.assign({}, TestEntry, {
-    name: "Test Job2",
+    name: 'Test Job2',
     schedule: function (parser) {
-      return parser.cron("30 11 * * ? *");
+      return parser.cron('30 11 * * ? *');
     },
   });
   SyncedCron.add(entry2);
@@ -110,7 +112,7 @@ Tinytest.addAsync("SyncedCron.stop works", async function (test) {
   test.equal(Object.keys(SyncedCron._entries).length, 0);
 });
 
-Tinytest.addAsync("SyncedCron.pause works", async function (test) {
+Tinytest.addAsync('SyncedCron.pause works', async function (test) {
   await SyncedCron._reset();
   test.equal(await SyncedCron._collection.find().countAsync(), 0);
 
@@ -118,9 +120,9 @@ Tinytest.addAsync("SyncedCron.pause works", async function (test) {
   SyncedCron.add(TestEntry);
 
   const entry2 = Object.assign({}, TestEntry, {
-    name: "Test Job2",
+    name: 'Test Job2',
     schedule: function (parser) {
-      return parser.cron("30 11 * * ? *");
+      return parser.cron('30 11 * * ? *');
     },
   });
   SyncedCron.add(entry2);
@@ -142,7 +144,7 @@ Tinytest.addAsync("SyncedCron.pause works", async function (test) {
 
 // Tests SyncedCron.remove in the process
 Tinytest.addAsync(
-  "SyncedCron.add starts by it self when running",
+  'SyncedCron.add starts by it self when running',
   async function (test) {
     await SyncedCron._reset();
 
@@ -166,30 +168,30 @@ Tinytest.addAsync(
 
     test.equal(SyncedCron.running, false);
     test.equal(Object.keys(SyncedCron._entries).length, 0);
-  },
+  }
 );
 
 Tinytest.addAsync(
-  "SyncedCron.config can customize the options object",
+  'SyncedCron.config can customize the options object',
   async function (test) {
     await SyncedCron._reset();
 
     SyncedCron.config({
       log: false,
-      collectionName: "foo",
+      collectionName: 'foo',
       utc: true,
       collectionTTL: 0,
     });
 
     test.equal(SyncedCron.options.log, false);
-    test.equal(SyncedCron.options.collectionName, "foo");
+    test.equal(SyncedCron.options.collectionName, 'foo');
     test.equal(SyncedCron.options.utc, true);
     test.equal(SyncedCron.options.collectionTTL, 0);
-  },
+  }
 );
 
 Tinytest.addAsync(
-  "SyncedCron can log to injected logger",
+  'SyncedCron can log to injected logger',
   async function (test, done) {
     await SyncedCron._reset();
 
@@ -206,19 +208,19 @@ Tinytest.addAsync(
     SyncedCron.start();
 
     SyncedCron.options.logger = null;
-  },
+  }
 );
 
 Tinytest.addAsync(
-  "SyncedCron should pass correct arguments to logger",
+  'SyncedCron should pass correct arguments to logger',
   async function (test, done) {
     await SyncedCron._reset();
 
     const logger = function (opts) {
-      test.include(opts, "level");
-      test.include(opts, "message");
-      test.include(opts, "tag");
-      test.equal(opts.tag, "SyncedCron");
+      test.include(opts, 'level');
+      test.include(opts, 'message');
+      test.include(opts, 'tag');
+      test.equal(opts.tag, 'SyncedCron');
 
       SyncedCron.stop();
       done();
@@ -230,7 +232,7 @@ Tinytest.addAsync(
     SyncedCron.start();
 
     SyncedCron.options.logger = null;
-  },
+  }
 );
 
 Tinytest.addAsync("Single time schedules don't break", async function () {
@@ -243,7 +245,7 @@ Tinytest.addAsync("Single time schedules don't break", async function () {
 });
 
 Tinytest.addAsync(
-  "Do not persist when flag is set to false",
+  'Do not persist when flag is set to false',
   async function (test) {
     await SyncedCron._reset();
 
@@ -254,5 +256,5 @@ Tinytest.addAsync(
     const now = new Date();
     await SyncedCron._entryWrapper(testEntryNoPersist)(now);
     test.equal(await SyncedCron._collection.find().countAsync(), 0);
-  },
+  }
 );

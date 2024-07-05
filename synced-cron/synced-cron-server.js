@@ -242,7 +242,7 @@ SyncedCron._entryWrapper = function (entry) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-      const output = entry.job(intendedAt, entry.name); // <- Run the actual job
+      const output = await entry.job(intendedAt, entry.name); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
       if (entry.persist) {
@@ -369,10 +369,10 @@ SyncedCron._laterSetTimeout = function (fn, sched) {
 };
 
 // Manually forces a cron process to run, now.
-SyncedCron.run = function (name) {
+SyncedCron.run = async function (name) {
   const entry = this._entries[name];
   if (entry) {
-    SyncedCron._entryWrapper(entry)(new Date());
+    await SyncedCron._entryWrapper(entry)(new Date());
   }
 };
 // ---------------------------------------------------------------------------

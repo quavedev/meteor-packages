@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.7 (2024-05-31)
+
+- Correctly wait for jobs to run and make `SyncedCron.run` correctly finish before returning.
+
 ## 2.0.6 (2024-05-31)
 
 - Remove `SyncedCron.setCollectionOptions`
