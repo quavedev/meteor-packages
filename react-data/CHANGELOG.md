@@ -1,5 +1,9 @@
 # Changelog
 
+# 4.1.2 (2024-07-22)
+
+- Bumping package dependencies to Meteor 3.
+
 # 4.1.1 (2024-04-27)
 
 - Fix errors when onSuccess, onError or onFinally are not defined. Now we defined a non-op function to avoid errors.
