@@ -9,7 +9,8 @@ SyncedCron = {
     logger: null,
 
     //Name of collection to use for synchronisation and logging
-    collectionName: "cronHistory",
+    collectionName: 'cronHistory',
+    collectionOptions: {},
 
     //Default to using localTime
     utc: false,
@@ -24,7 +25,7 @@ SyncedCron = {
   },
 };
 
-Later = Npm.require("@breejs/later");
+Later = Npm.require('@breejs/later');
 
 /*
   Logger factory function. Takes a prefix string and options object
@@ -46,33 +47,36 @@ function createLogger(prefix) {
   }
 
   return function (level, message) {
-    check(level, Match.OneOf("info", "error", "warn", "debug"));
+    check(level, Match.OneOf('info', 'error', 'warn', 'debug'));
     check(message, String);
 
     const logger = SyncedCron.options && SyncedCron.options.logger;
 
-    if (logger && typeof logger === "function") {
+    if (logger && typeof logger === 'function') {
       logger({
         level: level,
         message: message,
         tag: prefix,
       });
     } else {
-      Log[level]({ message: prefix + ": " + message });
+      Log[level]({ message: prefix + ': ' + message });
     }
   };
 }
 
 let log;
 
-const partial = (func, ...boundArgs) => (...remainingArgs) => func(...boundArgs, ...remainingArgs)
+const partial =
+  (func, ...boundArgs) =>
+  (...remainingArgs) =>
+    func(...boundArgs, ...remainingArgs);
 
 Meteor.startup(async function syncedCronStartup() {
   const options = SyncedCron.options;
 
-  log = createLogger("SyncedCron");
+  log = createLogger('SyncedCron');
 
-  ["info", "warn", "error", "debug"].forEach(function (level) {
+  ['info', 'warn', 'error', 'debug'].forEach(function (level) {
     log[level] = partial(log, level);
   });
 
@@ -84,19 +88,23 @@ Meteor.startup(async function syncedCronStartup() {
   else Later.date.localTime();
 
   // collection holding the job history records
-  SyncedCron._collection = new Mongo.Collection(options.collectionName);
+  SyncedCron._collection = new Mongo.Collection(
+    options.collectionName,
+    options.collectionOptions
+  );
+
   await SyncedCron._collection.createIndexAsync(
     { intendedAt: 1, name: 1 },
-    { unique: true },
+    { unique: true }
   );
 
   if (options.collectionTTL) {
     if (options.collectionTTL > minTTL)
       await SyncedCron._collection.createIndexAsync(
         { startedAt: 1 },
-        { expireAfterSeconds: options.collectionTTL },
+        { expireAfterSeconds: options.collectionTTL }
       );
-    else log.warn("Not going to use a TTL that is shorter than:" + minTTL);
+    else log.warn('Not going to use a TTL that is shorter than:' + minTTL);
   }
 });
 
@@ -104,14 +112,14 @@ const scheduleEntry = function (entry) {
   const schedule = entry.schedule(Later.parse);
   entry._timer = SyncedCron._laterSetInterval(
     SyncedCron._entryWrapper(entry),
-    schedule,
+    schedule
   );
 
   log.info(
     'Scheduled "' +
       entry.name +
       '" next run @' +
-      Later.schedule(schedule).next(1),
+      Later.schedule(schedule).next(1)
   );
 };
 
@@ -206,7 +214,7 @@ SyncedCron._entryWrapper = function (entry) {
 
     if (entry.persist) {
       jobHistory = {
-        intendedAt: intendedAt,
+        intendedAt,
         name: entry.name,
         startedAt: new Date(),
       };
@@ -218,7 +226,11 @@ SyncedCron._entryWrapper = function (entry) {
       } catch (e) {
         // http://www.mongodb.org/about/contributors/error-codes/
         // 11000 == duplicate key error
-        if (e.code === 11000 || e.message?.includes('E11000') || e.sanitizedError?.reason?.includes('E11000')) {
+        if (
+          e.code === 11000 ||
+          e.message?.includes('E11000') ||
+          e.sanitizedError?.reason?.includes('E11000')
+        ) {
           log.info('Not running "' + entry.name + '" again.');
           return;
         }
@@ -230,7 +242,7 @@ SyncedCron._entryWrapper = function (entry) {
     // run and record the job
     try {
       log.info('Starting "' + entry.name + '".');
-      const output = entry.job(intendedAt, entry.name); // <- Run the actual job
+      const output = await entry.job(intendedAt, entry.name); // <- Run the actual job
 
       log.info('Finished "' + entry.name + '".');
       if (entry.persist) {
@@ -241,13 +253,11 @@ SyncedCron._entryWrapper = function (entry) {
               finishedAt: new Date(),
               result: output,
             },
-          },
+          }
         );
       }
     } catch (e) {
-      log.info(
-        'Exception "' + entry.name + '" ' + (e && e.stack ? e.stack : e),
-      );
+      log.info(`Exception "${entry.name}" ${e && e.stack ? e.stack : e}`);
       if (entry.persist) {
         await self._collection.updateAsync(
           { _id: jobHistory._id },
@@ -256,7 +266,7 @@ SyncedCron._entryWrapper = function (entry) {
               finishedAt: new Date(),
               error: e && e.stack ? e.stack : e,
             },
-          },
+          }
         );
       }
     }
@@ -293,7 +303,7 @@ SyncedCron._laterSetInterval = function (fn, sched) {
         await fn(intendedAt);
       } catch (e) {
         log.info(
-          "Exception running scheduled job " + (e && e.stack ? e.stack : e),
+          'Exception running scheduled job ' + (e && e.stack ? e.stack : e)
         );
       }
 
@@ -356,5 +366,13 @@ SyncedCron._laterSetTimeout = function (fn, sched) {
       Meteor.clearTimeout(t);
     },
   };
+};
+
+// Manually forces a cron process to run, now.
+SyncedCron.run = async function (name) {
+  const entry = this._entries[name];
+  if (entry) {
+    await SyncedCron._entryWrapper(entry)(new Date());
+  }
 };
 // ---------------------------------------------------------------------------

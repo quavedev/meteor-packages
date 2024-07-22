@@ -1,0 +1,3 @@
+.build*
+.meteor/local
+.meteor/meteorite
