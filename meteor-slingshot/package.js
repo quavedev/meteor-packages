@@ -1,12 +1,12 @@
 Package.describe({
   name: 'quave:slingshot',
   summary: 'Directly post files to cloud storage services, such as AWS-S3.',
-  version: '2.0.0',
+  version: '2.0.1',
   git: 'https://github.com/quavedev/meteor-packages',
 });
 
 Package.onUse(function (api) {
-  api.versionsFrom(['METEOR@1.0', '3.0-beta.7']);
+  api.versionsFrom(['METEOR@1.0', '3.0.2']);
 
   api.use(['underscore', 'check']);
   api.use(['tracker', 'reactive-var'], 'client');
