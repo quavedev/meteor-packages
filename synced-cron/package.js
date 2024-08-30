@@ -1,7 +1,7 @@
 Package.describe({
   summary:
     'Allows you to define and run scheduled jobs across multiple servers.',
-  version: '2.0.7',
+  version: '2.0.8',
   name: 'quave:synced-cron',
   git: 'https://github.com/quavedev/meteor-synced-cron.git',
 });
@@ -9,7 +9,7 @@ Package.describe({
 Npm.depends({ '@breejs/later': '4.1.0' });
 
 Package.onUse(function (api) {
-  api.versionsFrom(['METEOR@2.12', 'METEOR@3.0-rc.2']);
+  api.versionsFrom(['METEOR@2.12', 'METEOR@3.0.2']);
 
   api.use('ecmascript');
 
