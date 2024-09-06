@@ -1,7 +1,7 @@
-import { EJSON } from 'meteor/ejson'
-import { CollectionHooks } from './collection-hooks'
+import { EJSON } from 'meteor/ejson';
+import { CollectionHooks } from './collection-hooks';
 
-const isEmpty = (a) => !Array.isArray(a) || !a.length
+const isEmpty = (a) => !Array.isArray(a) || !a.length;
 
 CollectionHooks.defineAdvice(
   'remove',
@@ -14,12 +14,12 @@ CollectionHooks.defineAdvice(
     args,
     suppressAspects
   ) {
-    const ctx = { context: this, _super, args }
-    const [selector, callback] = args
-    const async = typeof callback === 'function'
-    let docs
-    let abort
-    const prev = []
+    const ctx = { context: this, _super, args };
+    const [selector, callback] = args;
+    const async = typeof callback === 'function';
+    let docs;
+    let abort;
+    const prev = [];
 
     if (!suppressAspects) {
       try {
@@ -28,13 +28,13 @@ CollectionHooks.defineAdvice(
             this,
             instance,
             selector
-          )
-          docs = await cursor.fetch()
+          );
+          docs = await cursor.fetch();
         }
 
         // copy originals for convenience for the 'after' pointcut
         if (!isEmpty(aspects.after)) {
-          docs.forEach((doc) => prev.push(EJSON.clone(doc)))
+          docs.forEach((doc) => prev.push(EJSON.clone(doc)));
         }
 
         // before
@@ -44,26 +44,26 @@ CollectionHooks.defineAdvice(
               { transform: getTransform(doc), ...ctx },
               userId,
               doc
-            )
+            );
             if (r === false) {
-              abort = true
-              break
+              abort = true;
+              break;
             }
           }
 
           if (abort) {
-            break
+            break;
           }
         }
 
-        if (abort) return 0
+        if (abort) return 0;
       } catch (e) {
-        if (async) return callback.call(this, e)
-        throw e
+        if (async) return callback.call(this, e);
+        throw e;
       }
     }
 
-    async function after (err) {
+    async function after(err) {
       if (!suppressAspects) {
         for (const o of aspects.after) {
           for (const doc of prev) {
@@ -71,7 +71,7 @@ CollectionHooks.defineAdvice(
               { transform: getTransform(doc), err, ...ctx },
               userId,
               doc
-            )
+            );
           }
         }
       }
@@ -79,14 +79,14 @@ CollectionHooks.defineAdvice(
 
     if (async) {
       const wrappedCallback = async function (err, ...args) {
-        await after(err)
-        return callback.call(this, err, ...args)
-      }
-      return _super.call(this, selector, wrappedCallback)
+        await after(err);
+        return callback.call(this, err, ...args);
+      };
+      return _super.call(this, selector, wrappedCallback);
     } else {
-      const result = await _super.call(this, selector, callback)
-      await after()
-      return result
+      const result = await _super.call(this, selector, callback);
+      await after();
+      return result;
     }
   }
-)
+);

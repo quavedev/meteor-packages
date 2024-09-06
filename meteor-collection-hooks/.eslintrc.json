@@ -1,10 +1,6 @@
 {
-  "extends": [
-    "standard"
-  ],
-  "plugins": [
-    "standard"
-  ],
+  "extends": ["standard"],
+  "plugins": ["standard"],
   "parserOptions": {
     "sourceType": "module",
     "ecmaVersion": 2022,
