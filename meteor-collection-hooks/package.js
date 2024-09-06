@@ -4,16 +4,16 @@ Package.describe({
   name: 'quave:collection-hooks',
   summary:
     'Extends Mongo.Collection with before/after hooks for insert/update/upsert/remove/find/findOne',
-  version: '1.3.2',
+  version: '2.0.0',
   git: 'https://github.com/quavedev/meteor-packages',
 });
 
 Package.onUse(function (api) {
-  api.versionsFrom(['2.12']);
+  api.versionsFrom(['3.0']);
 
   api.use(['mongo', 'tracker', 'ejson', 'minimongo', 'ecmascript']);
 
-  api.use('zodern:types@1.0.11', 'server');
+  api.use('zodern:types@1.0.13', 'server');
 
   api.use(['accounts-base'], ['client', 'server'], { weak: true });
 
@@ -24,18 +24,18 @@ Package.onUse(function (api) {
 });
 
 Package.onTest(function (api) {
-  // var isTravisCI = process && process.env && process.env.TRAVIS
-
-  api.versionsFrom(['2.12']);
+  api.versionsFrom(['2.14', '3.0.2']);
 
   api.use([
-    'quave:collection-hooks',
+    'matb33:collection-hooks',
     'accounts-base',
     'accounts-password',
     'mongo',
+    'ddp',
     'tinytest',
     'test-helpers',
     'ecmascript',
+    'jquery',
   ]);
 
   api.mainModule('tests/client/main.js', 'client');
