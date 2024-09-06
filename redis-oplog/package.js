@@ -1,6 +1,6 @@
 Package.describe({
   name: 'quave:redis-oplog',
-  version: '3.0.1',
+  version: '3.0.2',
   // Brief, one-line summary of the package.
   summary: "Replacement for Meteor's MongoDB oplog implementation",
   // URL to the Git repository containing the source code for this package.

@@ -64,7 +64,7 @@ export default function PollingObserveDriver(options) {
   self._multiplexer = options.multiplexer;
   self._stopCallbacks = [];
   self._stopped = false;
-  self._synchronousCursor = self._mongoHandle._createSynchronousCursor(
+  self._asynchronousCursor = self._mongoHandle._createAsynchronousCursor(
     self._cursorDescription
   ); // previous results snapshot.  on each poll cycle, diffs against
   // results drives the callbacks.
@@ -214,7 +214,7 @@ Object.assign(PollingObserveDriver.prototype, {
 
     try {
       // TODO: should this be async?
-      newResults = await self._synchronousCursor.getRawObjects(self._ordered);
+      newResults = await self._asynchronousCursor.getRawObjects(self._ordered);
     } catch (e) {
       if (first && typeof e.code === 'number') {
         // This is an error document sent to us by mongod, not a connection
