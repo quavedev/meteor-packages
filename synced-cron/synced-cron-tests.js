@@ -258,3 +258,192 @@ Tinytest.addAsync(
     test.equal(await SyncedCron._collection.find().countAsync(), 0);
   }
 );
+
+Tinytest.addAsync(
+  'allowParallelExecution: true allows parallel execution',
+  async function (test) {
+    await SyncedCron._reset();
+    
+    const testEntry = Object.assign({}, TestEntry, {
+      name: 'Parallel Job',
+      allowParallelExecution: true,
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return 'ran';
+      }
+    });
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the first job
+    const job1Promise = SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the first job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Start a second job with a different intended time
+    const job2Promise = SyncedCron._entryWrapper(entry)(new Date(Date.now() + 1000));
+
+    // Wait for both jobs to complete
+    await Promise.all([job1Promise, job2Promise]);
+
+    // Check that both jobs ran
+    const jobHistories = await SyncedCron._collection.find().fetchAsync();
+    test.equal(jobHistories.length, 2, 'Both jobs should have run');
+    
+    if (jobHistories.length >= 2) {
+      test.equal(jobHistories[0].result, 'ran', 'First job should have run');
+      test.equal(jobHistories[1].result, 'ran', 'Second job should have run');
+    }
+
+    // Check that the jobs have different intendedAt times
+    if (jobHistories.length >= 2) {
+      test.notEqual(jobHistories[0].intendedAt.getTime(), jobHistories[1].intendedAt.getTime(), 'Jobs should have different intendedAt times');
+    }
+  }
+);
+
+Tinytest.addAsync(
+  'allowParallelExecution: false prevents parallel execution',
+  async function (test) {
+    await SyncedCron._reset();
+    
+    const testEntry = Object.assign({}, TestEntry, {
+      name: 'Non-Parallel Job',
+      allowParallelExecution: false,
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return 'ran';
+      }
+    });
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the first job
+    const job1Promise = SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the first job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Try to start a second job with a different intended time
+    const job2Promise = SyncedCron._entryWrapper(entry)(new Date(Date.now() + 1000));
+
+    // Wait for both job attempts to complete
+    await Promise.all([job1Promise, job2Promise]);
+
+    // Check that only one job ran
+    const jobHistories = await SyncedCron._collection.find().fetchAsync();
+    test.equal(jobHistories.length, 1, 'Only one job should have run');
+    
+    if (jobHistories.length > 0) {
+      test.equal(jobHistories[0].result, 'ran', 'The job should have run');
+    }
+  }
+);
+
+Tinytest.addAsync(
+  'timeoutToConsiderRunningForParallelExecution allows execution after timeout',
+  async function (test) {
+    await SyncedCron._reset();
+    
+    const testEntry = Object.assign({}, TestEntry, {
+      name: 'Timeout Job',
+      allowParallelExecution: false,
+      timeoutToConsiderRunningForParallelExecution: 1500,
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return 'ran';
+      }
+    });
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the first job
+    const job1Promise = SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait for more than the timeout
+    await new Promise(resolve => setTimeout(resolve, 1600));
+
+    // Start a second job
+    const job2Promise = SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait for both jobs to complete
+    await Promise.all([job1Promise, job2Promise]);
+
+    // Check that both jobs ran
+    const jobHistories = await SyncedCron._collection.find().fetchAsync();
+    test.equal(jobHistories.length, 2, 'Both jobs should have run');
+    
+    if (jobHistories.length >= 2) {
+      test.equal(jobHistories[0].result, 'ran', 'First job should have run');
+      test.equal(jobHistories[1].result, 'ran', 'Second job should have run');
+      test.isTrue(jobHistories[0].timedOut, 'First job should be marked as timed out');
+    }
+  }
+);
+
+Tinytest.addAsync(
+  'onSuccess callback is called with correct arguments',
+  async function (test) {
+    await SyncedCron._reset();
+    
+    let onSuccessCalled = false;
+    const testEntry = {
+      name: 'Success Job',
+      schedule: function (parser) {
+        return parser.text('every 1 second');
+      },
+      job: function () {
+        return 'success result';
+      },
+      onSuccess: function (opts) {
+        onSuccessCalled = true;
+        test.equal(opts.output, 'success result', 'Output should match job result');
+        test.equal(opts.name, 'Success Job', 'Name should match job name');
+        test.isTrue(opts.intendedAt instanceof Date, 'intendedAt should be a Date object');
+      }
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    await SyncedCron._entryWrapper(entry)(new Date());
+
+    test.isTrue(onSuccessCalled, 'onSuccess should have been called');
+  }
+);
+
+Tinytest.addAsync(
+  'onError callback is called with correct arguments',
+  async function (test) {
+    await SyncedCron._reset();
+    
+    let onErrorCalled = false;
+    const testEntry = {
+      name: 'Error Job',
+      schedule: function (parser) {
+        return parser.text('every 1 second');
+      },
+      job: function () {
+        throw new Error('Test error');
+      },
+      onError: function (opts) {
+        onErrorCalled = true;
+        test.instanceOf(opts.error, Error, 'Error should be an Error object');
+        test.equal(opts.error.message, 'Test error', 'Error message should match');
+        test.equal(opts.name, 'Error Job', 'Name should match job name');
+        test.isTrue(opts.intendedAt instanceof Date, 'intendedAt should be a Date object');
+      }
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    await SyncedCron._entryWrapper(entry)(new Date());
+
+    test.isTrue(onErrorCalled, 'onError should have been called');
+  }
+);

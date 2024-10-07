@@ -136,9 +136,16 @@ SyncedCron.add = function (entry) {
   check(entry.onError, Match.Optional(Function));
   check(entry.job, Function);
   check(entry.persist, Match.Optional(Boolean));
+  check(entry.allowParallelExecution, Match.Optional(Boolean));
+  check(entry.timeoutToConsiderRunningForParallelExecution, Match.Optional(Number));
 
   if (entry.persist === undefined) {
     entry.persist = true;
+  }
+
+  // Throw an error if allowParallelExecution is true but persist is false
+  if (entry.allowParallelExecution && !entry.persist) {
+    throw new Error("allowParallelExecution cannot be true when persist is false");
   }
 
   // check
@@ -221,32 +228,60 @@ SyncedCron._entryWrapper = function (entry) {
         startedAt: new Date(),
       };
 
-      // If we have a dup key error, another instance has already tried to run
-      // this job.
       try {
+        // Check if there's already a running job for this entry
+        const runningJob = await self._collection.findOneAsync({
+          name: entry.name,
+          finishedAt: { $exists: false },
+        });
+
+        if (runningJob && !entry.allowParallelExecution) {
+          if (entry.timeoutToConsiderRunningForParallelExecution) {
+            const now = new Date();
+            const runningTime = now - runningJob.startedAt;
+            if (runningTime < entry.timeoutToConsiderRunningForParallelExecution) {
+              log.info(`Skipping "${entry.name}" to prevent parallel execution. If you want to allow parallel execution, use the flag allowParallelExecution.`);
+              return;
+            } else {
+              log.info(`Previous job "${entry.name}" exceeded timeout. Allowing new execution.`);
+              // Update the previous job as timed out
+              await self._collection.updateAsync(
+                { _id: runningJob._id },
+                {
+                  $set: {
+                    finishedAt: now,
+                    timedOut: true,
+                  },
+                }
+              );
+            }
+          } else {
+            log.info(`Skipping "${entry.name}" to prevent parallel execution. If you want to allow parallel execution, use the flag allowParallelExecution.`);
+            return;
+          }
+        }
+
         jobHistory._id = await self._collection.insertAsync(jobHistory);
       } catch (e) {
-        // http://www.mongodb.org/about/contributors/error-codes/
-        // 11000 == duplicate key error
+        // Handle duplicate key error (same intendedAt and name)
         if (
           e.code === 11000 ||
           e.message?.includes('E11000') ||
           e.sanitizedError?.reason?.includes('E11000')
         ) {
-          log.info('Not running "' + entry.name + '" again.');
+          log.info(`Not running "${entry.name}" again for the same intendedAt.`);
           return;
         }
-
         throw e;
       }
     }
 
     // run and record the job
     try {
-      log.info('Starting "' + entry.name + '".');
+      log.info(`Starting "${entry.name}".`);
       const output = await entry.job(intendedAt, entry.name); // <- Run the actual job
 
-      log.info('Finished "' + entry.name + '".');
+      log.info(`Finished "${entry.name}".`);
       if (entry.persist) {
         await self._collection.updateAsync(
           { _id: jobHistory._id },
@@ -263,7 +298,7 @@ SyncedCron._entryWrapper = function (entry) {
       }
     } catch (e) {
       log.info(`Exception "${entry.name}" ${e && e.stack ? e.stack : e}`);
-      if (entry.persist) {
+      if (entry.persist && jobHistory) {
         await self._collection.updateAsync(
           { _id: jobHistory._id },
           {

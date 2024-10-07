@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.0 (2024-10-07)
+
+BREAKING CHANGE: `allowParallelExecution` is now `false` by default. Before, this package was allowing parallel executions except when the intendedAt was equal. Now, it's not allowing by default any parallel execution. So, if you want to keep the old behavior, in your add function, you should always provide `allowParallelExecution` as true. 
+
+- Add `allowParallelExecution` option to `SyncedCron.add`. This option allows to run the same job in parallel.
+- Add `timeoutToConsiderRunningForParallelExecution` option to `SyncedCron.add`. This timeout is a number in miliseconds. If the job takes more time than `timeoutToConsiderRunningForParallelExecution` and it's not finished, another instance of the job can be run in parallel.
+- Add tests for all the new changes since 2.0.9.
+
 ## 2.1.0 (2024-10-07)
 
 - This is actually 2.0.9 but as Meteor 3.0.3 is failing to publish only metadata I bumped the version to 2.1.0.
