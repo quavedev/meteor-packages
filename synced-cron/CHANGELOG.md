@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.9 (2024-10-07)
+
+- Adds `onSuccess` function, it's called after the job is finished successfully and persisted. It receives the following props inside an object: 
+  - `intendedAt`: The Date object representing the intended execution time of the job.
+  - `name`: A string containing the name of the job.
+  - `output`: The result returned by the job function.
+
+- Adds `onError` function, it's called when the job function throws an error and after it is persisted. It receives the following props inside an object:
+  - `error`: The error object.
+  - `name`: A string containing the name of the job.
+  - `intendedAt`: The Date object representing the intended execution time of the job.
+
+
+## 2.0.8 (2024-8-30)
+
+- Compatible with Meteor 3.0.2
+
 ## 2.0.7 (2024-05-31)
 
 - Correctly wait for jobs to run and make `SyncedCron.run` correctly finish before returning.

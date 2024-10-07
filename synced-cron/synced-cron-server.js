@@ -132,6 +132,8 @@ const scheduleEntry = function (entry) {
 SyncedCron.add = function (entry) {
   check(entry.name, String);
   check(entry.schedule, Function);
+  check(entry.onSuccess, Match.Optional(Function));
+  check(entry.onError, Match.Optional(Function));
   check(entry.job, Function);
   check(entry.persist, Match.Optional(Boolean));
 
@@ -256,6 +258,9 @@ SyncedCron._entryWrapper = function (entry) {
           }
         );
       }
+      if (entry.onSuccess) {
+        await entry.onSuccess({ intendedAt, name: entry.name, output });
+      }
     } catch (e) {
       log.info(`Exception "${entry.name}" ${e && e.stack ? e.stack : e}`);
       if (entry.persist) {
@@ -268,6 +273,9 @@ SyncedCron._entryWrapper = function (entry) {
             },
           }
         );
+      }
+      if (entry.onError) {
+        await entry.onError({ error: e, intendedAt, name: entry.name });
       }
     }
   };
