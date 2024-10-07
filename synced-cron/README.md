@@ -6,12 +6,6 @@ A simple cron system for [Meteor](http://meteor.com). It supports syncronizing j
 
 Quave version is compatible with Meteor 3.0 and forward.
 
-To migrate you can simply run
-
-``` sh
-$ meteor remove littledata:synced-cron && meteor add quave:synced-cron
-```
-
 ## Installation
 
 ``` sh
@@ -39,6 +33,18 @@ SyncedCron.add({
   }
 });
 ```
+
+You can also optionally provide the following functions:
+
+- `onSuccess(opts)`: Called after the job is finished successfully and persisted. It receives the following props inside an object:
+  - `output`: The result returned by the job function.
+  - `name`: A string containing the name of the job.
+  - `intendedAt`: The Date object representing the intended execution time of the job.
+- `onError(opts)`: Called when the job function throws an error and after it is persisted. It receives the following props inside an object:
+  - `error`: The error object.
+  - `name`: A string containing the name of the job.
+  - `intendedAt`: The Date object representing the intended execution time of the job.
+
 
 To start processing your jobs, somewhere in your project add:
 

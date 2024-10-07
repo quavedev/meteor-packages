@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0 (2024-10-07)
+
+- This is actually 2.0.9 but as Meteor 3.0.3 is failing to publish only metadata I bumped the version to 2.1.0.
+
 ## 2.0.9 (2024-10-07)
 
 - Adds `onSuccess` function, it's called after the job is finished successfully and persisted. It receives the following props inside an object: 
