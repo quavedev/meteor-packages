@@ -6,8 +6,9 @@ Features
 
 - Schemas
 - Helpers
-- Hooks
 - Composers
+
+> Compatible with Meteor 3.0.3+
 
 ## Why
 
@@ -15,7 +16,6 @@ Every application that connects to databases usually need the following features
 
 - A way to access object instances when they come from the database: helpers
 - Provide new methods to collections: collection
-- Add a few hooks to react to changes in different collections: hooks
 - Valid the data before persisting: schemas
 - Centralize behaviors: composers
 
@@ -31,29 +31,8 @@ We believe we are not reinventing the wheel in this package but what we are doin
 
 ```sh
 meteor add quave:collections
-```
-
-### Optional installations
-
-To use Hooks options you need to install [meteor-collection-hooks](https://github.com/Meteor-Community-Packages/meteor-collection-hooks)
-
-```sh
-meteor add matb33:collection-hooks
-```
-
-To use Schema options you need to install [simpl-schema](https://www.npmjs.com/package/simpl-schema) from npmjs
-
-```sh
 meteor npm install simpl-schema
 ```
-
-To use Helpers options you need to install [meteor-collection-helpers](https://github.com/dburles/meteor-collection-helpers)
-
-```sh
-meteor add dburles:collection-helpers
-```
-
-Check the documentation of each package to learn how to use them.
 
 ## Usage
 

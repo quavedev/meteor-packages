@@ -1,5 +1,14 @@
 ## CHANGELOG
 
+### 3.0.0 (2024-10-07)
+
+- Incorporates collection2 code, removing eventemitter dependency
+- Incorporates `collection-helpers` code
+- Tested only for Meteor 3.0.3+
+- Update installation to include `meteor npm i simpl-schema`
+- Accepts `createCollection({name: 'users'})` to create Meteor default users collection
+- Removes collection-hooks from readme but you still can use inside apply, make sure you test it with Meteor 3
+
 ### 2.0.1 (2023-03-22)
 
 - Fixes `Exception running scheduled job TypeError: context.invalidKeys is not a function`

@@ -1,7 +1,6 @@
 /* this code was copied from https://github.com/Meteor-Community-Packages/meteor-collection2/tree/master/package/collection2
  * to make quave:collections compatible with Meteor 3
  */
-import { EventEmitter } from 'meteor/raix:eventemitter';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { EJSON } from 'meteor/ejson';
@@ -58,15 +57,14 @@ function flattenSelector(selector) {
 
 const SimpleSchema = require('simpl-schema').default;
 
-// Exported only for listening to events
-const Collection2 = new EventEmitter();
-
-Collection2.cleanOptions = {
-  filter: true,
-  autoConvert: true,
-  removeEmptyStrings: true,
-  trimStrings: true,
-  removeNullsFromArrays: false,
+const Collection2 = {
+  cleanOptions: {
+    filter: true,
+    autoConvert: true,
+    removeEmptyStrings: true,
+    trimStrings: true,
+    removeNullsFromArrays: false,
+  },
 };
 
 /**
@@ -178,8 +176,6 @@ Mongo.Collection.prototype.attachSchema = function c2AttachSchema(ss, options) {
 
   defineDeny(this, options);
   keepInsecure(this);
-
-  Collection2.emit('schema.attached', this, ss, options);
 };
 
 [Mongo.Collection, LocalCollection].forEach((obj) => {

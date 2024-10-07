@@ -44,13 +44,15 @@ export const createCollection = ({
   helpers = {},
   apply = null,
   composers = [],
-  instance = null,
+  instance: instanceParam = null,
   options = {},
 }) => {
   try {
     if (isVerbose) {
       console.log(`${PACKAGE_NAME} ${name} settings`, settings);
     }
+
+    const instance = instanceParam || (name === 'users' ? Meteor.users : null);
 
     if (!name && !instance) {
       throw new Error(
