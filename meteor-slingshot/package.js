@@ -19,6 +19,7 @@ Package.onUse(function (api) {
     [
       'lib/directive.js',
       'lib/storage-policy.js',
+      'services/cloudflare-r2.js',
       'services/aws-s3.js',
       'services/google-cloud.js',
       'services/rackspace.js',
