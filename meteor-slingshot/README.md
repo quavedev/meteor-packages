@@ -367,6 +367,38 @@ curl -I -X POST -H 'X-Auth-Token: yourAuthToken' \
   https://storage101.containerRegion.clouddrive.com/v1/MossoCloudFS_yourAccoountNumber/yourContainer
 ```
 
+### Cloudflare R2
+
+For now, to use Cloudflare R2 as provider you will mainly need the following items: 
+
+You will need your Cloudflare `accountId`, `AccessKeyId`, and `SecretAccessKey`. These can be obtained from your Cloudflare R2 dashboard.
+
+Note that the `AccessKeyId` and `SecretAccessKey` are specific to R2.
+
+For your directive, you need to provide the bucket name, account ID, endpoint, CDN, and access credentials.
+
+Cloudflare R2 needs a CDN to be able to download files from your bucket. For more information, check [these docs](https://developers.cloudflare.com/r2/buckets/public-buckets/).
+
+```JavaScript
+Slingshot.createDirective("cloudflare-r2-example", Slingshot.CloudflareR2, {
+  bucket: "my-bucket", // R2 bucket name
+  accountId: "your-account-id", // Your Cloudflare account ID
+  endpoint: "https://your-account-id.r2.cloudflarestorage.com", // R2 endpoint
+  AccessKeyId: "your-access-key-id", // R2 Access Key ID
+  SecretAccessKey: "your-secret-access-key", // R2 Secret Access Key
+  region: "auto", // Region (optional, default is "auto")
+
+  // You must set the cdn for the files to be accessible:
+  cdn: "https://pub-xyz.r2.dev",
+
+  key: async function (file) {
+    // Store file into a directory by the user's username
+    var user = await Meteor.users.findOneAsync(this.userId);
+    return user.username + "/" + file.name;
+  }
+});
+```
+
 ### Cloudinary
 
 Cloudinary is supported via a 3rd party package.
@@ -598,6 +630,26 @@ deleted. _This attribute is not enforced at all. It can be easily altered by the
 client_
 
 `deleteAfter` Number (optional) - Same as `deleteAt`, but relative.
+
+#### Cloudflare R2 (`Slingshot.CloudflareR2`)
+
+`bucket`: String (**required**) - Name of the R2 bucket to use.
+
+`accountId`: String (**required**) - Your Cloudflare account ID.
+
+`endpoint`: String (**required**) - The R2 service endpoint URL, e.g., `https://your-account-id.r2.cloudflarestorage.com`.
+
+`AccessKeyId`: String (**required**) - Your Cloudflare R2 Access Key ID.
+
+`SecretAccessKey`: String (**required**) - Your Cloudflare R2 Secret Access Key.
+
+`cdn`: String (**required**) - Your CDN to download files from your bucket. (Different from other providers, cdn is required for Cloudflare R2.) e.g., `pub-id.r2.dev`
+
+`region`: String (optional) - Region for the R2 bucket. Default is `"auto"`.
+
+`key`: String or Function or promise (**required**) - Name of the file in the R2 bucket. If a function is provided, it will be called with `userId` in the context and its return value is used as the key.
+
+`expire`: Number (optional) - The expiration time for the signed URL in seconds. Default is 5 minutes.
 
 ### File restrictions
 

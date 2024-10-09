@@ -9,11 +9,10 @@ Slingshot.CloudflareR2 = {
     bucket: String,
     accountId: String,
     endpoint: String,
-    cdn: Match.Optional(String),
+    cdn: String,
     region: Match.Optional(String),
     AccessKeyId: String,
     SecretAccessKey: String,
-    acl: Match.Optional(String),
     key: Match.OneOf(String, Function),
     expire: Match.Where(function (expire) {
       check(expire, Number);
@@ -23,7 +22,7 @@ Slingshot.CloudflareR2 = {
 
   directiveDefault: {
     region: 'auto',
-    expire: 60 * 60,
+    expire: 5 * 60 * 1000,
   },
 
   getContentDisposition: async function (method, directive, file, meta) {
@@ -62,9 +61,7 @@ Slingshot.CloudflareR2 = {
 
       const signedUrl = await this.getSignedUrl(directive, key, file.type);
 
-      const downloadUrl = directive.cdn
-        ? `${directive.cdn}/${key}`
-        : `${directive.endpoint}/${directive.bucket}/${key}`;
+      const downloadUrl = `${directive.cdn}/${key}`
 
       return {
         upload: signedUrl,
