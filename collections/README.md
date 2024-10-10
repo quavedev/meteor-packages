@@ -95,8 +95,7 @@ The `persistable` composer adds a `save` method to your collection, which handle
 To use the `persistable` composer:
 
 ```js
-import { createCollection } from 'meteor/quave:collections';
-import { persistable } from 'meteor/quave:collections/composers/persistable';
+import { createCollection, persistable } from 'meteor/quave:collections';
 
 export const UsersCollection = createCollection({
   name: 'users',
@@ -108,10 +107,16 @@ The `save` method can be used as follows:
 
 ```js
 // Insert a new document
-const newUser = await UsersCollection.save({ name: 'John Doe', email: 'john@example.com' });
+const newUser = await UsersCollection.save({
+  name: 'John Doe',
+  email: 'john@example.com',
+});
 
 // Update an existing document
-const updatedUser = await UsersCollection.save({ _id: newUser._id, name: 'John Updated' });
+const updatedUser = await UsersCollection.save({
+  _id: newUser._id,
+  name: 'John Updated',
+});
 
 // Save with custom selector to find existing document
 const user = await UsersCollection.save(
@@ -151,6 +156,36 @@ export const CustomUsersCollection = createCollection({
 
 The `persistable` composer provides a convenient way to handle document persistence with automatic timestamp management and customizable pre-save hooks.
 
+##### softRemoval
+
+The `softRemoval` composer adds soft deletion functionality to your collection. Instead of permanently deleting documents, it marks them as removed and filters them out of normal queries.
+
+To use the `softRemoval` composer:
+
+```js
+import { createCollection, softRemoval } from 'meteor/quave:collections';
+
+export const UsersCollection = createCollection({
+  name: 'users',
+  composers: [softRemoval],
+});
+
+// Example of soft removal
+const user = await UsersCollection.insertAsync({ name: 'John Doe' });
+await UsersCollection.removeAsync(user._id);
+
+// The user is not actually removed, but marked as removed (using option includeSoftRemoved)
+const removedUser = await UsersCollection.findOneAsync(
+  { _id: user._id },
+  { includeSoftRemoved: true }
+);
+console.log(removedUser); // { _id: ..., name: 'John Doe', isRemoved: true }
+
+// The user seems to be removed
+const removedUser2 = await UsersCollection.findOneAsync({ _id: user._id });
+console.log(removedUser2); // null
+```
+
 #### Create your own composer
 
 Example creating a way to paginate the fetch of data using `composers`
@@ -159,7 +194,7 @@ Example creating a way to paginate the fetch of data using `composers`
 import { createCollection } from 'meteor/quave:collections';
 
 const LIMIT = 7;
-export const paginable = collection =>
+export const paginable = (collection) =>
   Object.assign({}, collection, {
     getPaginated({ selector, options = {}, paginationAction }) {
       const { skip, limit } = paginationAction || { skip: 0, limit: LIMIT };
@@ -205,85 +240,13 @@ const { items, pagination } = StoresCollection.getPaginated({
 });
 ```
 
-A different example, a little bit more complex, overriding a few methods of the original collection in order to implement a soft removal (this example only works in `quave:collections@1.1.0` or later).
-
-```js
-import { createCollection } from 'meteor/quave:collections';
-
-const toSelector = (filter) => {
-  if (typeof filter === 'string') {
-    return { _id: filter };
-  }
-  return filter;
-};
-
-const filterOptions = (options = {}) => {
-  if (options.ignoreSoftRemoved) {
-    return {};
-  }
-  return { isRemoved: { $ne: true } };
-};
-
-export const softRemoval = (collection) => {
-  const originalFind = collection.find.bind(collection);
-  const originalFindOne = collection.findOne.bind(collection);
-  const originalUpdate = collection.update.bind(collection);
-  const originalRemove = collection.remove.bind(collection);
-  return Object.assign({}, collection, {
-    find(selector, options) {
-      return originalFind(
-        {
-          ...toSelector(selector),
-          ...filterOptions(options),
-        },
-        options
-      );
-    },
-    findOne(selector, options) {
-      return originalFindOne(
-        {
-          ...toSelector(selector),
-          ...filterOptions(options),
-        },
-        options
-      );
-    },
-    remove(selector, options = {}) {
-      if (options.hardRemove) {
-        return originalRemove(selector);
-      }
-      return originalUpdate(
-        {
-          ...toSelector(selector),
-        },
-        {
-          $set: {
-            ...(options.$set || {}),
-            isRemoved: true,
-            removedAt: new Date(),
-          },
-        },
-        { multi: true }
-      );
-    },
-  });
-};
-export const SourcesCollection = createCollection({
-  name: 'sources',
-  composers: [softRemoval],
-});
-
-// usage example
-SourcesCollection.remove({ _id: 'KEFemSmeZ9EpNfkcH' }); // this will use the soft removal, it means, this setting `isRemoved` to true
-SourcesCollection.remove({ _id: 'KEFemSmeZ9EpNfkcH' }, { hardRemove: true }); // this will remove in the database
-
-```
-
 ### Options
+
 Second argument for the default [collections constructor](https://docs.meteor.com/api/collections.html#Mongo-Collection).
 Example defining a transform function.
+
 ```js
-const transform = doc => ({
+const transform = (doc) => ({
   ...doc,
   get user() {
     return Meteor.users.findOne(this.userId);
@@ -306,14 +269,14 @@ Extending Meteor.users, also using `collection`, `helpers`, `composers`, `apply`
 You can use all these options also with `name` instead of `instance`.
 
 ```js
-import {createCollection} from 'meteor/quave:collections';
+import { createCollection } from 'meteor/quave:collections';
 
 export const UsersCollection = createCollection({
   instance: Meteor.users,
   schema: UserTypeDef,
   collection: {
     isAdmin(userId) {
-      const user = userId && this.findOne(userId, {fields: {profiles: 1}});
+      const user = userId && this.findOne(userId, { fields: { profiles: 1 } });
       return (
         user && user.profiles && user.profiles.includes(UserProfile.ADMIN.name)
       );
@@ -332,7 +295,7 @@ export const UsersCollection = createCollection({
   },
   composers: [paginable],
   apply(coll) {
-    coll.after.insert(userAfterInsert(coll), {fetchPrevious: false});
+    coll.after.insert(userAfterInsert(coll), { fetchPrevious: false });
     coll.after.update(userAfterUpdate);
   },
 });

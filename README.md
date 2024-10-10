@@ -8,7 +8,7 @@ According to `zodern:types` documentation, we need to create a `package-types.js
 
 ```json
 {
-    "typesEntry": "collections.d.ts"
+    "typesEntry": "collections.js"
 }
 ```
 
@@ -26,7 +26,6 @@ We configure the tsconfig.json to convert the .js files to .d.ts files like this
     "emitDeclarationOnly": true,
     "outDir": "."
   },
-  "include": ["collections.js"],
   "exclude": ["node_modules", "**/*.d.ts"]
 }
 ```
@@ -44,6 +43,14 @@ And then we can run the script:
 nvm use
 npm run generate-dts
 ```
+
+Generate command is something like:
+
+```bash
+rm -rf **/*.d.ts && tsc && find . -type f -name '*.d.ts' -size 0 -delete
+```
+
+First we clean up all d.ts files, then we run tsc to generate the new ones and finally we delete the empty ones.
 
 > We set .nvmrc to 20 to make sure we are at the same major version as Meteor.
 

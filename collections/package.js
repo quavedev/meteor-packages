@@ -18,10 +18,8 @@ Package.onUse((api) => {
   api.use(['ecmascript', 'mongo', 'minimongo', 'ejson']);
   api.imply('mongo');
 
-  api.use('zodern:types@1.0.13');
-
   api.use('quave:settings@1.0.0');
 
   api.mainModule('collections.js');
-  api.addFiles(['composers/persistable.js']);
+  api.addFiles(['composers/persistable.js', 'composers/softRemoval.js']);
 });

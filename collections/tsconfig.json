@@ -6,5 +6,5 @@
     "outDir": "."
   },
   "include": ["collections.js"],
-  "exclude": ["node_modules", "**/*.d.ts"]
+  "exclude": ["node_modules", "**/*.d.ts"],
 }
