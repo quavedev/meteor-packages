@@ -1,0 +1,11 @@
+{
+  "name": "quave-collections",
+  "version": "1.0.0",
+  "description": "`quave:collections` is a Meteor package that allows you to create your collections in a standard way.",
+  "main": "collections.js",
+  "scripts": {
+    "generate-dts": "tsc"
+  },
+  "author": "Filipe Névola <filipe@quave.com.br>",
+  "license": "MIT"
+}

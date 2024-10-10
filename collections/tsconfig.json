@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "."
+  },
+  "include": ["collections.js"],
+  "exclude": ["node_modules", "**/*.d.ts"]
+}

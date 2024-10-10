@@ -196,7 +196,7 @@ Mongo.Collection.prototype.attachSchema = function c2AttachSchema(ss, options) {
 
     const schemas = this._c2._simpleSchemas;
     if (schemas && schemas.length > 0) {
-      let schema, selector, target;
+      let schema; let selector; let target;
       // Position 0 reserved for base schema
       for (let i = 1; i < schemas.length; i++) {
         schema = schemas[i];
@@ -226,9 +226,9 @@ Mongo.Collection.prototype.attachSchema = function c2AttachSchema(ss, options) {
       }
       if (schemas[0]) {
         return schemas[0].schema;
-      } else {
+      } 
         throw new Error('No default schema');
-      }
+      
     }
 
     return null;
@@ -379,10 +379,10 @@ function doValidate(
   isFromTrustedCode,
   async
 ) {
-  let doc, callback, error, options, selector;
+  let doc; let callback; let error; let options; let selector;
 
   if (!args.length) {
-    throw new Error(type + ' requires an argument');
+    throw new Error(`${type  } requires an argument`);
   }
 
   // Gather arguments and cache the selector
@@ -451,7 +451,7 @@ function doValidate(
   }
 
   // Determine validation context
-  let validationContext = options.validationContext;
+  let {validationContext} = options;
   if (validationContext) {
     if (typeof validationContext === 'string') {
       validationContext = schema.namedContext(validationContext);
@@ -469,7 +469,7 @@ function doValidate(
     // down.
     callback = function (err) {
       if (err) {
-        Meteor._debug(type + ' failed: ' + (err.reason || err.stack));
+        Meteor._debug(`${type  } failed: ${  err.reason || err.stack}`);
       }
     };
   }
@@ -600,9 +600,9 @@ function doValidate(
   // XXX Maybe move this into SimpleSchema
   if (!validatedObjectWasInitiallyEmpty && isEmpty(docToValidate)) {
     throw new Error(
-      'After filtering out keys not in the schema, your ' +
-        (isUpdateType(type) ? 'modifier' : 'object') +
-        ' is now empty'
+      `After filtering out keys not in the schema, your ${ 
+        isUpdateType(type) ? 'modifier' : 'object' 
+        } is now empty`
     );
   }
 
@@ -650,7 +650,7 @@ function doValidate(
     }
 
     return [args, validationContext];
-  } else {
+  } 
     error = getErrorObject(
       validationContext,
       Meteor.settings?.packages?.collection2?.disableCollectionNamesInValidation
@@ -661,10 +661,10 @@ function doValidate(
       // insert/update/upsert pass `false` when there's an error, so we do that
       callback(error, false);
       return [];
-    } else {
+    } 
       throw error;
-    }
-  }
+    
+  
 }
 
 function getErrorObject(context, appendToMessage = '', code) {
@@ -785,13 +785,13 @@ function keepInsecure(c) {
   // true. Otherwise, it would seemingly turn off insecure mode.
   if (Package && Package.insecure && !alreadyInsecure[c._name]) {
     const allow = {
-      insert: function () {
+      insert () {
         return true;
       },
-      update: function () {
+      update () {
         return true;
       },
-      remove: function () {
+      remove () {
         return true;
       },
       fetch: [],
@@ -827,7 +827,7 @@ function defineDeny(c, options) {
     // and auto-values. This must be done with 'transform: null' or we would be
     // extending a clone of doc and therefore have no effect.
     const firstDeny = {
-      insert: function (userId, doc) {
+      insert (userId, doc) {
         // Referenced doc is cleaned in place
         c.simpleSchema(doc).clean(doc, {
           mutate: true,
@@ -850,7 +850,7 @@ function defineDeny(c, options) {
 
         return false;
       },
-      update: function (userId, doc, fields, modifier) {
+      update (userId, doc, fields, modifier) {
         // Referenced modifier is cleaned in place
         c.simpleSchema(modifier).clean(modifier, {
           mutate: true,
@@ -893,7 +893,7 @@ function defineDeny(c, options) {
     // we need to pass the doc through any transforms to be sure
     // that custom types are properly recognized for type validation.
     const secondDeny = {
-      insert: function (userId, doc) {
+      insert (userId, doc) {
         // We pass the false options because we will have done them on the client if desired
         doValidate(
           c,
@@ -923,7 +923,7 @@ function defineDeny(c, options) {
 
         return false;
       },
-      update: function (userId, doc, fields, modifier) {
+      update (userId, doc, fields, modifier) {
         // NOTE: This will never be an upsert because client-side upserts
         // are not allowed once you define allow/deny functions.
         // We pass the false options because we will have done them on the client if desired
@@ -980,7 +980,7 @@ export function extendSchema(s1, s2) {
     const ss = new SimpleSchema(s1);
     ss.extend(s2);
     return ss;
-  } else {
+  } 
     return new SimpleSchema([s1, s2]);
-  }
+  
 }

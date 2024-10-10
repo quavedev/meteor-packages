@@ -12,6 +12,7 @@
     ]
   },
   "devDependencies": {
-    "@quave/eslint-config-quave": "^2.5.2"
+    "@quave/eslint-config-quave": "^2.5.2",
+    "typescript": "^5.6.3"
   }
 }

@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 3.0.1 (2024-10-10)
+
+- Adds types to the package
+
 ### 3.0.0 (2024-10-07)
 
 - Incorporates collection2 code, removing eventemitter dependency
