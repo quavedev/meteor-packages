@@ -1,8 +1,8 @@
 /* global Package */
 Package.describe({
   name: 'quave:collections',
-  version: '3.0.1',
-  summary: 'Utility package to create Meteor collections in a standard way',
+  version: '3.0.2',
+  summary: 'Utility package to create Meteor collections with enhanced functionality',
   git: 'https://github.com/quavedev/meteor-packages/tree/main/collections',
 });
 
@@ -23,4 +23,5 @@ Package.onUse((api) => {
   api.use('quave:settings@1.0.0');
 
   api.mainModule('collections.js');
+  api.addFiles(['composers/persistable.js']);
 });

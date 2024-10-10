@@ -106,3 +106,5 @@ export const createCollection = ({
     throw e;
   }
 };
+
+export { persistable } from './composers/persistable';

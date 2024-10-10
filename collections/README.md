@@ -40,7 +40,7 @@ meteor npm install simpl-schema
 
 Example applying `collection` property:
 
-```javascript
+```js
 import { createCollection } from 'meteor/quave:collections';
 
 export const AddressesCollection = createCollection({
@@ -64,7 +64,7 @@ export const AddressesCollection = createCollection({
 
 Example applying `SimpleSchema`:
 
-```javascript
+```js
 import { createCollection } from 'meteor/quave:collections';
 
 import SimpleSchema from 'simpl-schema';
@@ -86,9 +86,76 @@ export const PlayersCollection = createCollection({
 
 ### Composers
 
+#### Built-in composers
+
+##### persistable
+
+The `persistable` composer adds a `save` method to your collection, which handles both inserting new documents and updating existing ones. It also automatically manages `createdAt` and `updatedAt` fields.
+
+To use the `persistable` composer:
+
+```js
+import { createCollection } from 'meteor/quave:collections';
+import { persistable } from 'meteor/quave:collections/composers/persistable';
+
+export const UsersCollection = createCollection({
+  name: 'users',
+  composers: [persistable()],
+});
+```
+
+The `save` method can be used as follows:
+
+```js
+// Insert a new document
+const newUser = await UsersCollection.save({ name: 'John Doe', email: 'john@example.com' });
+
+// Update an existing document
+const updatedUser = await UsersCollection.save({ _id: newUser._id, name: 'John Updated' });
+
+// Save with custom selector to find existing document
+const user = await UsersCollection.save(
+  { email: 'john@example.com', name: 'John Doe' },
+  { selectorToFindId: { email: 'john@example.com' } }
+);
+
+// Save without returning the document
+await UsersCollection.save({ name: 'Alice' }, { skipReturn: true });
+
+// Save and return only specific fields
+const savedUser = await UsersCollection.save(
+  { name: 'Bob' },
+  { projection: { name: 1 } }
+);
+```
+
+You can also customize the `persistable` composer by providing `beforeInsert` and `beforeUpdate` functions:
+
+```js
+const customPersistable = persistable({
+  beforeInsert: ({ doc }) => {
+    // Modify the document before insertion
+    return { ...doc, customField: 'value' };
+  },
+  beforeUpdate: ({ doc }) => {
+    // Modify the document before update
+    return { ...doc, lastModified: new Date() };
+  },
+});
+
+export const CustomUsersCollection = createCollection({
+  name: 'customUsers',
+  composers: [customPersistable],
+});
+```
+
+The `persistable` composer provides a convenient way to handle document persistence with automatic timestamp management and customizable pre-save hooks.
+
+#### Create your own composer
+
 Example creating a way to paginate the fetch of data using `composers`
 
-```javascript
+```js
 import { createCollection } from 'meteor/quave:collections';
 
 const LIMIT = 7;
@@ -140,7 +207,7 @@ const { items, pagination } = StoresCollection.getPaginated({
 
 A different example, a little bit more complex, overriding a few methods of the original collection in order to implement a soft removal (this example only works in `quave:collections@1.1.0` or later).
 
-```javascript
+```js
 import { createCollection } from 'meteor/quave:collections';
 
 const toSelector = (filter) => {
@@ -215,7 +282,7 @@ SourcesCollection.remove({ _id: 'KEFemSmeZ9EpNfkcH' }, { hardRemove: true }); //
 ### Options
 Second argument for the default [collections constructor](https://docs.meteor.com/api/collections.html#Mongo-Collection).
 Example defining a transform function.
-```javascript
+```js
 const transform = doc => ({
   ...doc,
   get user() {
@@ -238,7 +305,7 @@ Extending Meteor.users, also using `collection`, `helpers`, `composers`, `apply`
 
 You can use all these options also with `name` instead of `instance`.
 
-```javascript
+```js
 import {createCollection} from 'meteor/quave:collections';
 
 export const UsersCollection = createCollection({
