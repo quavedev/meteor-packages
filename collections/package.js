@@ -16,8 +16,9 @@ Package.onUse((api) => {
   api.versionsFrom('3.0.3');
 
   api.use(['ecmascript', 'mongo', 'minimongo', 'ejson']);
-  api.use('zodern:types');
   api.imply('mongo');
+
+  api.use('zodern:types@1.0.13');
 
   api.use('quave:settings@1.0.0');
 

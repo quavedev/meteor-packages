@@ -36,7 +36,7 @@ mongo-id@1.0.9
 npm-mongo@4.17.4
 ordered-dict@1.2.0
 promise@1.0.0
-quave:collections@3.0.0
+quave:collections@3.0.1
 quave:settings@1.0.0
 random@1.2.2
 react-fast-refresh@0.2.9
@@ -49,3 +49,4 @@ typescript@5.4.3
 underscore@1.6.4
 webapp@2.0.1
 webapp-hashing@1.1.2
+zodern:types@1.0.13
