@@ -106,3 +106,6 @@ export const createCollection = ({
     throw e;
   }
 };
+
+export { persistable } from './composers/persistable';
+export { softRemoval } from './composers/softRemoval';

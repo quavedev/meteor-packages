@@ -1,5 +1,10 @@
 ## CHANGELOG
 
+### 3.0.2 (2024-10-10)
+
+- Adds `persistable` composer
+- Adds `softRemoval` composer
+
 ### 3.0.1 (2024-10-10)
 
 - Adds types to the package

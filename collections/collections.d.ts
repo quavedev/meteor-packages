@@ -8,3 +8,5 @@ export function createCollection({ name, schema, collection, helpers, apply, com
     instance?: Mongo.Collection;
     options?: any;
 }): Mongo.Collection;
+export { persistable } from "./composers/persistable";
+export { softRemoval } from "./composers/softRemoval";
