@@ -39,7 +39,7 @@ const getDbCollection = ({ name, helpers, instance, options }) => {
 
 /**
  * Creates a new Meteor collection with enhanced functionality.
- * 
+ *
  * @param {Object} options - The options for creating the collection.
  * @param {string} [options.name] - The name of the collection. Required unless `instance` is provided.
  * @param {Object} [options.schema] - The SimpleSchema object for the collection.
@@ -47,10 +47,11 @@ const getDbCollection = ({ name, helpers, instance, options }) => {
  * @param {Object} [options.helpers={}] - Helper functions to be attached to the collection's documents.
  * @param {Function} [options.apply=null] - A function to be applied to the collection after creation.
  * @param {Array<Function>} [options.composers=[]] - An array of composer functions to be applied to the collection.
+ * @param {Boolean} [options.isServerOnly=false] - If true, the collection will be allowed only on the server.
  * @param {Mongo.Collection} [options.instance=null] - An existing Mongo.Collection instance to use instead of creating a new one.
  * @param {Object} [options.options={}] - Additional options to be passed to the Mongo.Collection constructor.
  * @returns {Mongo.Collection} The created or enhanced Mongo.Collection instance.
- * @throws {Error} If the collection name is missing when required or if collections are not allowed on the client.
+ * @throws {Meteor.Error} If the collection name is missing when required or if collections are not allowed on the client.
  */
 export const createCollection = ({
   name,
@@ -59,6 +60,7 @@ export const createCollection = ({
   helpers = {},
   apply = null,
   composers = [],
+  isServerOnly: isServerOnlyParam = false,
   instance: instanceParam = null,
   options = {},
 }) => {
@@ -70,13 +72,18 @@ export const createCollection = ({
     const instance = instanceParam || (name === 'users' ? Meteor.users : null);
 
     if (!name && !instance) {
-      throw new Error(
+      throw new Meteor.Error(
         "The option 'name' is required, unless you are using the option 'instance' that is not your case :)."
       );
     }
     if (Meteor.isClient && isServerOnly) {
-      throw new Error(
+      throw new Meteor.Error(
         'Collections are not allowed in the client, you can disable this changing the setting `isServerOnly`'
+      );
+    }
+    if (Meteor.isClient && isServerOnlyParam) {
+      throw new Meteor.Error(
+        `"${name}" collection is not allowed in the client, you can disable this changing the option "isServerOnly"`
       );
     }
     const dbCollection = getDbCollection({
