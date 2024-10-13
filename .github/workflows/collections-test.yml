@@ -1,0 +1,23 @@
+name: Collections Package Test
+
+on:
+  push:
+    paths:
+      - 'collections/**'
+  pull_request:
+    paths:
+      - 'collections/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install Meteor
+        uses: meteorengineer/setup-meteor@v1
+        with:
+          meteor-release: '3.0.3'
+
+      - name: Run package tests
+        run: meteor test-packages ./collections
