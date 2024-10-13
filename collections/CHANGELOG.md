@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### 3.0.4 (2024-10-13)
+
+- Adds types using only zodern:types.
+
 ### 3.0.3 (2024-10-13)
 
 - Adds `isServerOnly` on `createCollection` function as an option.
