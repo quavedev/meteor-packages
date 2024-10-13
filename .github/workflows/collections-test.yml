@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'collections/**'
+      - '.github/workflows/collections-test.yml'
   pull_request:
     paths:
       - 'collections/**'
+      - '.github/workflows/collections-test.yml'
 
 jobs:
   test:
