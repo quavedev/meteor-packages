@@ -13,11 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install Meteor
         uses: meteorengineer/setup-meteor@v1
         with:
           meteor-release: '3.0.3'
 
       - name: Run package tests
-        run: meteor test-packages ./collections
+        working-directory:  ./collections
+        run: meteor npm i simpl-schema && meteor test-packages ./
