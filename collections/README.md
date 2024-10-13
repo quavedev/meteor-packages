@@ -31,7 +31,7 @@ We believe we are not reinventing the wheel in this package but what we are doin
 
 ```sh
 meteor add quave:collections
-meteor npm install simpl-schema
+meteor npm install simpl-schema@3.4.6
 ```
 
 ## Usage
