@@ -10,7 +10,6 @@ Npm.depends({
   'lodash.isempty': '4.4.0',
   'lodash.isequal': '4.5.0',
   'lodash.isobject': '3.0.2',
-  'simpl-schema': '3.4.6',
 });
 
 Package.onUse((api) => {
