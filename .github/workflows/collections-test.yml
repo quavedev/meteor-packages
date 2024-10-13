@@ -13,6 +13,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v3
 
@@ -23,4 +24,5 @@ jobs:
 
       - name: Run package tests
         working-directory: ./collections
-        run: meteor test-packages ./
+        run: |
+          meteor test-packages ./ --once --driver-package meteortesting:mocha
