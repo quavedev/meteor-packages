@@ -303,7 +303,7 @@ export const UsersCollection = createCollection({
 
 ### Publishing
 
-Bump the version following semver in `package.js` and run `meteor npm run generate-dts` to generate the types.
+Bump the version following semver in `package.js` and run `meteor test-packages ./` to make sure all the tests are passing.
 
 Then publish the package:
 
