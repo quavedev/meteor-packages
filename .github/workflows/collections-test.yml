@@ -21,6 +21,14 @@ jobs:
         with:
           meteor-release: '3.0.3'
 
+      - name: Install dependencies
+        working-directory: ./collections
+        run: |
+          npm install -g npm@latest
+          npm install simpl-schema
+
       - name: Run package tests
-        working-directory:  ./collections
-        run: meteor npm i simpl-schema && meteor test-packages ./
+        working-directory: ./collections
+        run: |
+          export NODE_PATH=$(npm root -g)
+          meteor test-packages ./
