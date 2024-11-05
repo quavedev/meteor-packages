@@ -26,11 +26,11 @@ Slingshot.CloudflareR2 = {
   },
 
   getContentDisposition: async function (method, directive, file, meta) {
-    var getContentDisposition = directive.contentDisposition;
+    let getContentDisposition = directive.contentDisposition;
 
     if (!_.isFunction(getContentDisposition)) {
       getContentDisposition = function () {
-        var filename = file.name && encodeURIComponent(file.name);
+        const filename = file.name && encodeURIComponent(file.name);
 
         return (
           directive.contentDisposition ||
@@ -51,12 +51,9 @@ Slingshot.CloudflareR2 = {
         .expireIn(directive.expire)
         .contentLength(0, Math.min(file.size, directive.maxSize || Infinity));
 
-      let key;
-      if (_.isFunction(directive.key)) {
-        key = await Promise.resolve(directive.key.call(method, file, meta));
-      } else {
-        key = directive.key;
-      }
+      const key = _.isFunction(directive.key)
+      ? await directive.key.call(method, file, meta)
+      : directive.key
 
       const signedUrl = await this.getSignedUrl(directive, key, file.type);
 

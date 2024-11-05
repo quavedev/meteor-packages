@@ -66,11 +66,11 @@ Slingshot.S3Storage = {
     .value(),
 
   getContentDisposition: async function (method, directive, file, meta) {
-    var getContentDisposition = directive.contentDisposition;
+    let getContentDisposition = directive.contentDisposition;
 
     if (!_.isFunction(getContentDisposition)) {
       getContentDisposition = function () {
-        var filename = file.name && encodeURIComponent(file.name);
+        const filename = file.name && encodeURIComponent(file.name);
 
         return (
           directive.contentDisposition ||
