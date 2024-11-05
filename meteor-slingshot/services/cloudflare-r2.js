@@ -47,7 +47,6 @@ Slingshot.CloudflareR2 = {
   },
 
   upload: async function (method, directive, file, meta) {
-    try {
       const policy = new Slingshot.StoragePolicy()
         .expireIn(directive.expire)
         .contentLength(0, Math.min(file.size, directive.maxSize || Infinity));
@@ -67,15 +66,11 @@ Slingshot.CloudflareR2 = {
         upload: signedUrl,
         download: downloadUrl,
         postData: [],
+        service: "CloudflareR2"
       };
-    } catch (error) {
-      console.error('Error in CloudflareR2 upload:', error);
-      throw error;
-    }
   },
 
   getSignedUrl: async function (directive, key, contentType) {
-    try {
       const date = new Date();
       const dateString = date.toISOString().replace(/[:-]|\.\d{3}/g, '');
       const datestamp = dateString.slice(0, 8);
@@ -114,10 +109,6 @@ Slingshot.CloudflareR2 = {
       return `${directive.endpoint}/${
         directive.bucket
       }/${key}?${queryParams.toString()}`;
-    } catch (error) {
-      console.error('Error in getSignedUrl:', error);
-      throw error;
-    }
   },
 
   getCanonicalRequest: function (directive, key, queryParams) {

@@ -202,17 +202,11 @@ Slingshot.Upload = function (directive, metaData) {
         );
       });
 
-      let isR2 = self.instructions.upload.includes('r2.cloudflarestorage.com');
-      let method = 'POST';
-      let formData = buildFormData();
-
-      if (isR2) {
-        method = 'PUT';
-        formData = self.file;
-      }
-
+      const method = self.instructions.service === "CloudflareR2" ? "PUT" : "POST";
+      const formData = self.instructions.service === "CloudflareR2" ? self.file : buildFormData();
+      
       xhr.open(method, self.instructions.upload, true);
-
+      
       _.each(self.instructions.headers, function (value, key) {
         xhr.setRequestHeader(key, value);
       });

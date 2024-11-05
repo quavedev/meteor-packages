@@ -151,6 +151,7 @@ Slingshot.S3Storage = {
           .compact()
           .value()
       ),
+      service: "S3"
     };
   },
 
