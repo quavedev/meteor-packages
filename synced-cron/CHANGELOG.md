@@ -1,5 +1,11 @@
 # Changelog
 
+
+## 2.2.1 (2024-11-19)
+
+- Add automatic cleanup of running jobs when the process encounters a fatal error (uncaught exceptions and unhandled rejections). The cleanup consists of marking the job as finished and adding a `terminatedBy` field to the job history collection to indicate how the job was terminated.
+  - Add tests for the new functionality.
+
 ## 2.2.0 (2024-10-07)
 
 BREAKING CHANGE: `allowParallelExecution` is now `false` by default. Before, this package was allowing parallel executions except when the intendedAt was equal. Now, it's not allowing by default any parallel execution. So, if you want to keep the old behavior, in your add function, you should always provide `allowParallelExecution` as true. 
