@@ -171,6 +171,7 @@ _.extend(Slingshot.Directive.prototype, {
         },
       ],
       headers: Match.Optional(Object),
+      service: Match.Optional(String),
     });
 
     return instructions;
