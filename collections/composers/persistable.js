@@ -53,8 +53,10 @@ export const persistable =
         doc,
         { selectorToFindId, projection, skipReturn, shouldFetchFullDoc } = {}
       ) {
+        const self = this;
+
         const oldDoc = await getIdOrDocOrNullAsync({
-          collection: this,
+          collection: self,
           doc,
           selectorToFindId,
           shouldFetchFullDoc,
@@ -62,15 +64,15 @@ export const persistable =
         if (oldDoc) {
           const { ...data } = doc;
           const dataToSave = { ...data, updatedAt: new Date() };
-          await this.updateAsync(oldDoc._id, {
+          await self.updateAsync(oldDoc._id, {
             $set: await beforeUpdate({
-              collection: this,
+              collection: self,
               doc: dataToSave,
               isUpdate: true,
             }),
           });
           await afterUpdate({
-            collection: this,
+            collection: self,
             oldDoc,
             doc: dataToSave,
             isUpdate: true,
@@ -79,7 +81,7 @@ export const persistable =
           if (skipReturn) {
             return null;
           }
-          return this.findOneAsync(oldDoc._id, {
+          return self.findOneAsync(oldDoc._id, {
             ...(projection && { projection }),
           });
         }
@@ -91,20 +93,20 @@ export const persistable =
         };
         const insertedId = await this.insertAsync(
           await beforeInsert({
-            collection: this,
+            collection: self,
             doc: dataToInsert,
             isInsert: true,
           })
         );
         await afterInsert({
-          collection: this,
+          collection: self,
           doc: dataToInsert,
           isInsert: true,
         });
         if (skipReturn) {
           return null;
         }
-        return this.findOneAsync(insertedId, {
+        return self.findOneAsync(insertedId, {
           ...(projection && { projection }),
         });
       },
