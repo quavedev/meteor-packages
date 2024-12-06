@@ -134,7 +134,7 @@ const savedUser = await UsersCollection.save(
 );
 ```
 
-You can also customize the `persistable` composer by providing `beforeInsert` and `beforeUpdate` functions:
+You can customize the `persistable` composer by providing `beforeInsert` and `beforeUpdate` functions:
 
 ```js
 const customPersistable = persistable({
@@ -154,6 +154,33 @@ export const CustomUsersCollection = createCollection({
 });
 ```
 
+You can also customize the `persistable` composer by providing the `afterInsert` and `afterUpdate` functions, which apply an action after the document has been inserted or updated.
+
+```js
+const customPersistable = persistable({
+  afterInsert: ({ doc }) => {
+    // Any action after the document has been inserted
+  },
+  afterUpdate: ({ doc }) => {
+    // Any action after the document has been updated
+  },
+});
+
+export const CustomUsersCollection = createCollection({
+  name: 'customUsers',
+  composers: [customPersistable],
+});
+```
+
+Also, you can use the `shouldFetchFullDoc` flag to decide whether the old document should be fetched from the database and used in the `afterUpdate` function.
+
+```js
+const savedUser = await UsersCollection.save(
+  { _id: user._id, name: 'Bob' },
+  { shouldFetchFullDoc: true }
+);
+```
+
 The `persistable` composer provides a convenient way to handle document persistence with automatic timestamp management and customizable pre-save hooks.
 
 ##### softRemoval
@@ -167,7 +194,7 @@ import { createCollection, softRemoval } from 'meteor/quave:collections';
 
 export const UsersCollection = createCollection({
   name: 'users',
-  composers: [softRemoval],
+  composers: [softRemoval()],
 });
 
 // Example of soft removal
@@ -184,6 +211,20 @@ console.log(removedUser); // { _id: ..., name: 'John Doe', isRemoved: true }
 // The user seems to be removed
 const removedUser2 = await UsersCollection.findOneAsync({ _id: user._id });
 console.log(removedUser2); // null
+```
+
+You can also customize the `softRemoval` composer by providing the `afterRemove` function. This function will be called after the document has been removed, and you can provide the documents to this function by adding the flag `shouldFetchFullDoc`.
+
+```js
+const customSoftRemoval = softRemoval({
+  afterRemove: ({ doc }) => {
+    // Any action after the document has been removed
+  },
+});
+```
+
+```js
+await UsersCollection.removeAsync(user._id, { shouldFetchFullDoc: true });
 ```
 
 #### Create your own composer
