@@ -54,12 +54,12 @@ export const persistable =
         { selectorToFindId, projection, skipReturn, shouldFetchFullDoc } = {}
       ) {
         const oldDoc = await getIdOrDocOrNullAsync({
-          collection,
+          collection: this,
           doc,
           selectorToFindId,
           shouldFetchFullDoc,
         });
-        if (oldDoc?._id) {
+        if (oldDoc) {
           const { ...data } = doc;
           const dataToSave = { ...data, updatedAt: new Date() };
           await this.updateAsync(oldDoc._id, {

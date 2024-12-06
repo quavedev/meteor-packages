@@ -64,9 +64,7 @@ export const softRemoval =
         }
 
         await originalUpdateAsync(
-          {
-            ...toSelector(selector),
-          },
+          toSelector(selector),
           {
             $set: {
               ...(options.$set || {}),
