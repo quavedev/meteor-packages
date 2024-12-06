@@ -213,12 +213,12 @@ const removedUser2 = await UsersCollection.findOneAsync({ _id: user._id });
 console.log(removedUser2); // null
 ```
 
-You can also customize the `softRemoval` composer by providing the `afterRemove` function. This function will be called after the document has been removed, and you can provide the documents to this function by adding the flag `shouldFetchFullDoc`.
+You can also customize the `softRemoval` composer by providing the `afterRemove` function. This function will be called after the documents has been removed, and you can provide the documents to this function by adding the flag `shouldFetchFullDoc`.
 
 ```js
 const customSoftRemoval = softRemoval({
-  afterRemove: ({ doc }) => {
-    // Any action after the document has been removed
+  afterRemove: ({ docs }) => {
+    // Any action after the documents have been removed
   },
 });
 ```

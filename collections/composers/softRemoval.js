@@ -19,7 +19,7 @@ const filterOptions = (options = {}) => {
  * @returns {Object} An enhanced collection with soft removal methods.
  */
 export const softRemoval =
-  ({ afterRemove = ({ doc }) => doc } = {}) =>
+  ({ afterRemove = ({ docs }) => docs } = {}) =>
   (collection) => {
     const originalFind = collection.find.bind(collection);
     const originalFindOneAsync = collection.findOneAsync.bind(collection);
@@ -55,7 +55,12 @@ export const softRemoval =
 
         if (hardRemove) {
           await originalRemoveAsync(selector);
-          return afterRemove({ doc: docsToRemove, collection, isRemove: true });
+          return afterRemove({
+            docs: docsToRemove,
+            collection,
+            isRemove: true,
+            isHardRemove: true,
+          });
         }
 
         await originalUpdateAsync(
@@ -72,7 +77,12 @@ export const softRemoval =
           { multi: true }
         );
 
-        return afterRemove({ doc: docsToRemove, collection, isRemove: true });
+        return afterRemove({
+          docs: docsToRemove,
+          collection,
+          isRemove: true,
+          isHardRemove: false,
+        });
       },
     });
   };
