@@ -134,10 +134,11 @@ const savedUser = await UsersCollection.save(
 );
 ```
 
-You can customize the `persistable` composer by providing `beforeInsert` and `beforeUpdate` functions:
+You can customize the `persistable` composer by providing `beforeInsert`, `beforeUpdate`, `afterInsert`, and `afterUpdate` functions, along with the `shouldFetchFullDoc` option:
 
 ```js
 const customPersistable = persistable({
+  shouldFetchFullDoc: true, // When true, fetches the full document for updates
   beforeInsert: ({ doc }) => {
     // Modify the document before insertion
     return { ...doc, customField: 'value' };
@@ -146,23 +147,12 @@ const customPersistable = persistable({
     // Modify the document before update
     return { ...doc, lastModified: new Date() };
   },
-});
-
-export const CustomUsersCollection = createCollection({
-  name: 'customUsers',
-  composers: [customPersistable],
-});
-```
-
-You can also customize the `persistable` composer by providing the `afterInsert` and `afterUpdate` functions, which apply an action after the document has been inserted or updated.
-
-```js
-const customPersistable = persistable({
   afterInsert: ({ doc }) => {
     // Any action after the document has been inserted
   },
-  afterUpdate: ({ doc }) => {
+  afterUpdate: ({ doc, oldDoc }) => {
     // Any action after the document has been updated
+    // When shouldFetchFullDoc is true, oldDoc contains the full previous document
   },
 });
 
@@ -171,17 +161,6 @@ export const CustomUsersCollection = createCollection({
   composers: [customPersistable],
 });
 ```
-
-Also, you can use the `shouldFetchFullDoc` flag to decide whether the old document should be fetched from the database and used in the `afterUpdate` function.
-
-```js
-const savedUser = await UsersCollection.save(
-  { _id: user._id, name: 'Bob' },
-  { shouldFetchFullDoc: true }
-);
-```
-
-The `persistable` composer provides a convenient way to handle document persistence with automatic timestamp management and customizable pre-save hooks.
 
 ##### softRemoval
 
@@ -194,9 +173,15 @@ import { createCollection, softRemoval } from 'meteor/quave:collections';
 
 export const UsersCollection = createCollection({
   name: 'users',
-  composers: [softRemoval()],
+  composers: [softRemoval({
+    shouldFetchFullDoc: false, // Optional, defaults to false
+  })],
 });
+```
 
+Basic usage example:
+
+```js
 // Example of soft removal
 const user = await UsersCollection.insertAsync({ name: 'John Doe' });
 await UsersCollection.removeAsync(user._id);
@@ -208,23 +193,30 @@ const removedUser = await UsersCollection.findOneAsync(
 );
 console.log(removedUser); // { _id: ..., name: 'John Doe', isRemoved: true }
 
-// The user seems to be removed
+// The user seems to be removed in normal queries
 const removedUser2 = await UsersCollection.findOneAsync({ _id: user._id });
 console.log(removedUser2); // null
 ```
 
-You can also customize the `softRemoval` composer by providing the `afterRemove` function. This function will be called after the documents has been removed, and you can provide the documents to this function by adding the flag `shouldFetchFullDoc`.
+You can customize the `softRemoval` composer by providing the `afterRemove` function and `shouldFetchFullDoc` option:
 
 ```js
 const customSoftRemoval = softRemoval({
-  afterRemove: ({ docs }) => {
+  shouldFetchFullDoc: true, // When true, fetches full documents before removal
+  afterRemove: ({ docs, collection, isRemove, isHardRemove }) => {
+    // docs will contain the full documents when shouldFetchFullDoc is true
+    // isHardRemove indicates if it was a permanent removal
     // Any action after the documents have been removed
   },
 });
-```
 
-```js
-await UsersCollection.removeAsync(user._id, { shouldFetchFullDoc: true });
+export const CustomUsersCollection = createCollection({
+  name: 'customUsers',
+  composers: [customSoftRemoval],
+});
+
+// For hard removal:
+await CustomUsersCollection.removeAsync(user._id, { hardRemove: true });
 ```
 
 #### Create your own composer

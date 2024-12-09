@@ -2,7 +2,7 @@ const getIdOrDocOrNullAsync = async ({
   collection,
   doc,
   selectorToFindId,
-  shouldFetchFullDoc = false,
+  shouldFetchFullDoc,
 }) => {
   if (doc._id) {
     return shouldFetchFullDoc
@@ -22,6 +22,7 @@ const getIdOrDocOrNullAsync = async ({
  * Creates a persistable composer for a collection.
  *
  * @param {Object} options - The options for the persistable composer.
+ * @param {boolean} [options.shouldFetchFullDoc] - If true, fetches the full existing document.
  * @param {Function} [options.beforeInsert=({doc}) => doc] - A function to modify the document before insertion.
  * @param {Function} [options.beforeUpdate=({doc}) => doc] - A function to modify the document before update.
  * @param {Function} [options.afterInsert=({doc}) => doc] - A function to do any additional actions after insertion.
@@ -30,6 +31,7 @@ const getIdOrDocOrNullAsync = async ({
  */
 export const persistable =
   ({
+     shouldFetchFullDoc = false,
     beforeInsert = ({ doc }) => doc,
     beforeUpdate = ({ doc }) => doc,
     afterInsert = ({ doc }) => doc,
@@ -46,12 +48,11 @@ export const persistable =
        * @param {Object} [options.selectorToFindId] - A selector to find an existing document's ID.
        * @param {Object} [options.projection] - The projection to use when returning the saved document.
        * @param {boolean} [options.skipReturn] - If true, doesn't return the saved document.
-       * @param {boolean} [options.shouldFetchFullDoc] - If true, fetches the full existing document.
        * @returns {Promise<Object|null>} The saved document, or null if skipReturn is true.
        */
       async save(
         doc,
-        { selectorToFindId, projection, skipReturn, shouldFetchFullDoc } = {}
+        { selectorToFindId, projection, skipReturn } = {}
       ) {
         const self = this;
 
