@@ -1,5 +1,19 @@
 ## CHANGELOG
 
+### 3.1.1 (2024-12-09)
+Enhance persistable and softRemoval composers with `shouldFetchFullDoc` option
+
+- Updated the persistable composer to include a `shouldFetchFullDoc` parameter, allowing for the retrieval of the full existing document during operations.
+- Modified the softRemoval composer to also accept the `shouldFetchFullDoc` option, improving document handling before removal.
+- Adjusted related method signatures and documentation to reflect these changes, enhancing clarity and maintainability.
+
+### 3.1.0 (2024-12-06)
+
+- Adds `shouldFetchFullDoc` flag to `softRemoval` and `persistable` composers.
+- Adds `afterInsert` and `afterUpdate` to `persistable` composer.
+- Adds `afterRemove` to `softRemoval` composer.
+- Now `softRemoval` composer should be called as a function when adding on the composers array.
+
 ### 3.0.4 (2024-10-13)
 
 - Adds types using only zodern:types.

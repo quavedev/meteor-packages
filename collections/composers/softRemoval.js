@@ -18,48 +18,69 @@ const filterOptions = (options = {}) => {
  * @param {Mongo.Collection} collection - The collection to enhance with soft removal functionality.
  * @returns {Object} An enhanced collection with soft removal methods.
  */
-export const softRemoval = (collection) => {
-  const originalFind = collection.find.bind(collection);
-  const originalFindOneAsync = collection.findOneAsync.bind(collection);
-  const originalUpdateAsync = collection.updateAsync.bind(collection);
-  const originalRemoveAsync = collection.removeAsync.bind(collection);
-  // eslint-disable-next-line prefer-object-spread
-  return Object.assign({}, collection, {
-    find(selector, options) {
-      return originalFind(
-        {
-          ...toSelector(selector),
-          ...filterOptions(options),
-        },
-        options
-      );
-    },
-    async findOneAsync(selector, options) {
-      return originalFindOneAsync(
-        {
-          ...toSelector(selector),
-          ...filterOptions(options),
-        },
-        options
-      );
-    },
-    async removeAsync(selector, options = {}) {
-      if (options.hardRemove) {
-        return originalRemoveAsync(selector);
-      }
-      return originalUpdateAsync(
-        {
-          ...toSelector(selector),
-        },
-        {
-          $set: {
-            ...(options.$set || {}),
-            isRemoved: true,
-            removedAt: new Date(),
+export const softRemoval =
+  ({ shouldFetchFullDoc = false, afterRemove = ({ docs }) => docs } = {}) =>
+  (collection) => {
+    const originalFind = collection.find.bind(collection);
+    const originalFindOneAsync = collection.findOneAsync.bind(collection);
+    const originalUpdateAsync = collection.updateAsync.bind(collection);
+    const originalRemoveAsync = collection.removeAsync.bind(collection);
+    // eslint-disable-next-line prefer-object-spread
+    return Object.assign({}, collection, {
+      find(selector, options) {
+        return originalFind(
+          {
+            ...toSelector(selector),
+            ...filterOptions(options),
           },
-        },
-        { multi: true }
-      );
-    },
-  });
-};
+          options
+        );
+      },
+      async findOneAsync(selector, options) {
+        return originalFindOneAsync(
+          {
+            ...toSelector(selector),
+            ...filterOptions(options),
+          },
+          options
+        );
+      },
+      async removeAsync(
+        selector,
+        { hardRemove, ...options } = {}
+      ) {
+        const docsToRemove =
+          shouldFetchFullDoc &&
+          (await originalFind(toSelector(selector)).fetchAsync());
+
+        if (hardRemove) {
+          await originalRemoveAsync(selector);
+          return afterRemove({
+            docs: docsToRemove,
+            collection,
+            isRemove: true,
+            isHardRemove: true,
+          });
+        }
+
+        await originalUpdateAsync(
+          toSelector(selector),
+          {
+            $set: {
+              ...(options.$set || {}),
+              isRemoved: true,
+              removedAt: new Date(),
+            },
+          },
+          { multi: true }
+        );
+
+        return afterRemove({
+          docs: docsToRemove,
+          collection,
+          isRemove: true,
+          isHardRemove: false,
+        });
+      },
+    });
+  };
