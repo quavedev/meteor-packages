@@ -2,6 +2,7 @@
 SyncedCron = {
   _entries: {},
   running: false,
+  processId: `cron-${Date.now()}`,
   options: {
     //Log job run details to console
     log: true,
@@ -112,7 +113,10 @@ Meteor.startup(async function syncedCronStartup() {
 
     try {
       const result = await SyncedCron._collection.updateAsync(
-        { finishedAt: { $exists: false } },
+        {
+          finishedAt: { $exists: false },
+          processId: SyncedCron.processId,
+        },
         {
           $set: {
             finishedAt: new Date(),
@@ -139,6 +143,7 @@ Meteor.startup(async function syncedCronStartup() {
       SyncedCron.pause();
 
       await cleanupRunningJobs(signal)
+      process.exit(0);
     }));
   });
 
@@ -149,6 +154,7 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('uncaughtException') === 1) {
       await cleanupRunningJobs('UNCAUGHT_EXCEPTION');
+      process.exit(0);
     }
   });
 
@@ -158,6 +164,7 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('unhandledRejection') === 1) {
       await cleanupRunningJobs('UNHANDLED_REJECTION');
+      process.exit(0);
     }
   });
 
@@ -283,6 +290,7 @@ SyncedCron._entryWrapper = function (entry) {
         intendedAt,
         name: entry.name,
         startedAt: new Date(),
+        processId: self.processId,
       };
 
       try {
