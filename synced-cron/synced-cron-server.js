@@ -2,6 +2,7 @@
 SyncedCron = {
   _entries: {},
   running: false,
+  processId: Random.id(),
   options: {
     //Log job run details to console
     log: true,
@@ -106,6 +107,69 @@ Meteor.startup(async function syncedCronStartup() {
       );
     else log.warn('Not going to use a TTL that is shorter than:' + minTTL);
   }
+
+  const cleanupRunningJobs = async (signal) => {
+    log.info(`Received ${signal} signal - cleaning up running jobs`);
+
+    try {
+      const result = await SyncedCron._collection.updateAsync(
+        {
+          finishedAt: { $exists: false },
+          processId: SyncedCron.processId,
+        },
+        {
+          $set: {
+            finishedAt: new Date(),
+            terminatedBy: signal,
+          }
+        },
+        { multi: true }
+      );
+
+      if (result > 0) {
+        log.info(`Marked ${result} running jobs as terminated`);
+      }
+    } catch (err) {
+      log.error(`Failed to cleanup running jobs: ${err.message}`);
+    }
+  };
+
+  // Handle graceful shutdown signals
+  const terminationSignals = ['SIGTERM', 'SIGINT'];
+  terminationSignals.forEach((signal) => {
+    process.on(signal, Meteor.bindEnvironment(async () => {
+      log.info(`Initiating graceful shutdown (${signal})`);
+
+      SyncedCron.pause();
+
+      await cleanupRunningJobs(signal)
+      process.exit(0);
+    }));
+  });
+
+  // Handle uncaught exceptions and unhandled rejections separately
+  const handleUncaughtException = Meteor.bindEnvironment(async (error) => {
+    log.error(`Fatal error encountered (uncaughtException): ${error.stack || error}`);
+
+    // Only cleanup if there are no other error handlers
+    if (process.listenerCount('uncaughtException') === 1) {
+      await cleanupRunningJobs('UNCAUGHT_EXCEPTION');
+      process.exit(0);
+    }
+  });
+
+  const handleUnhandledRejection = Meteor.bindEnvironment(async (reason) => {
+    log.error(`Fatal error encountered (unhandledRejection): ${reason?.stack || reason}`);
+
+    // Only cleanup if there are no other error handlers
+    if (process.listenerCount('unhandledRejection') === 1) {
+      await cleanupRunningJobs('UNHANDLED_REJECTION');
+      process.exit(0);
+    }
+  });
+
+  process.on('uncaughtException', handleUncaughtException);
+  process.on('unhandledRejection', handleUnhandledRejection);
 });
 
 const scheduleEntry = function (entry) {
@@ -226,6 +290,7 @@ SyncedCron._entryWrapper = function (entry) {
         intendedAt,
         name: entry.name,
         startedAt: new Date(),
+        processId: self.processId,
       };
 
       try {

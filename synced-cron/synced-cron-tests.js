@@ -2,6 +2,17 @@ Later = Npm.require('@breejs/later');
 
 Later.date.localTime(); // corresponds to SyncedCron.options.utc: true;
 
+let originalProcessExit;
+
+const mockProcessExit = () => {
+  originalProcessExit = process.exit;
+  process.exit = function () { /* noop */ };
+};
+
+const restoreProcessExit = () => {
+  process.exit = originalProcessExit;
+};
+
 const TestEntry = {
   name: 'Test Job',
   schedule: function (parser) {
@@ -263,7 +274,7 @@ Tinytest.addAsync(
   'allowParallelExecution: true allows parallel execution',
   async function (test) {
     await SyncedCron._reset();
-    
+
     const testEntry = Object.assign({}, TestEntry, {
       name: 'Parallel Job',
       allowParallelExecution: true,
@@ -291,7 +302,7 @@ Tinytest.addAsync(
     // Check that both jobs ran
     const jobHistories = await SyncedCron._collection.find().fetchAsync();
     test.equal(jobHistories.length, 2, 'Both jobs should have run');
-    
+
     if (jobHistories.length >= 2) {
       test.equal(jobHistories[0].result, 'ran', 'First job should have run');
       test.equal(jobHistories[1].result, 'ran', 'Second job should have run');
@@ -308,7 +319,7 @@ Tinytest.addAsync(
   'allowParallelExecution: false prevents parallel execution',
   async function (test) {
     await SyncedCron._reset();
-    
+
     const testEntry = Object.assign({}, TestEntry, {
       name: 'Non-Parallel Job',
       allowParallelExecution: false,
@@ -336,7 +347,7 @@ Tinytest.addAsync(
     // Check that only one job ran
     const jobHistories = await SyncedCron._collection.find().fetchAsync();
     test.equal(jobHistories.length, 1, 'Only one job should have run');
-    
+
     if (jobHistories.length > 0) {
       test.equal(jobHistories[0].result, 'ran', 'The job should have run');
     }
@@ -347,7 +358,7 @@ Tinytest.addAsync(
   'timeoutToConsiderRunningForParallelExecution allows execution after timeout',
   async function (test) {
     await SyncedCron._reset();
-    
+
     const testEntry = Object.assign({}, TestEntry, {
       name: 'Timeout Job',
       allowParallelExecution: false,
@@ -376,7 +387,7 @@ Tinytest.addAsync(
     // Check that both jobs ran
     const jobHistories = await SyncedCron._collection.find().fetchAsync();
     test.equal(jobHistories.length, 2, 'Both jobs should have run');
-    
+
     if (jobHistories.length >= 2) {
       test.equal(jobHistories[0].result, 'ran', 'First job should have run');
       test.equal(jobHistories[1].result, 'ran', 'Second job should have run');
@@ -389,7 +400,7 @@ Tinytest.addAsync(
   'onSuccess callback is called with correct arguments',
   async function (test) {
     await SyncedCron._reset();
-    
+
     let onSuccessCalled = false;
     const testEntry = {
       name: 'Success Job',
@@ -420,7 +431,7 @@ Tinytest.addAsync(
   'onError callback is called with correct arguments',
   async function (test) {
     await SyncedCron._reset();
-    
+
     let onErrorCalled = false;
     const testEntry = {
       name: 'Error Job',
@@ -445,5 +456,317 @@ Tinytest.addAsync(
     await SyncedCron._entryWrapper(entry)(new Date());
 
     test.isTrue(onErrorCalled, 'onError should have been called');
+  }
+);
+
+Tinytest.addAsync(
+  'Cleanup marks jobs as terminated on SIGTERM',
+  async function (test) {
+    mockProcessExit();
+    await SyncedCron._reset();
+
+    // Create a long-running job
+    const testEntry = {
+      name: 'Long Running Job',
+      schedule: function (parser) {
+        return parser.text('every 1 second');
+      },
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return 'completed';
+      }
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the job but don't await it
+    SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Simulate SIGTERM
+    process.emit('SIGTERM');
+
+    // Wait for cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check the job history
+    const jobHistory = await SyncedCron._collection.findOneAsync();
+
+    test.isNotNull(jobHistory, 'Job history should exist');
+    test.isNotUndefined(jobHistory.finishedAt, 'Job should be marked as finished');
+    test.equal(jobHistory.terminatedBy, 'SIGTERM', 'Job should be marked as terminated by SIGTERM');
+
+    restoreProcessExit();
+  }
+);
+
+Tinytest.addAsync(
+  'Cleanup marks jobs as terminated on uncaught exception',
+  async function (test) {
+    mockProcessExit();
+    await SyncedCron._reset();
+
+    // Create a long-running job
+    const testEntry = {
+      name: 'Exception Job',
+      schedule: function (parser) {
+        return parser.text('every 1 second');
+      },
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return 'completed';
+      }
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the job but don't await it
+    SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Create a fatal error
+    const fatalError = new Error('Fatal error')
+
+    // Simulate fatal error
+    process.emit('uncaughtException', fatalError);
+
+    // Wait for cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check the job history
+    const jobHistory = await SyncedCron._collection.findOneAsync();
+
+    test.isNotNull(jobHistory, 'Job history should exist');
+    test.isNotUndefined(jobHistory.finishedAt, 'Job should be marked as finished');
+    test.equal(jobHistory.terminatedBy, 'UNCAUGHT_EXCEPTION', 'Job should be marked as terminated by UNCAUGHT_EXCEPTION');
+
+    restoreProcessExit();
+  }
+);
+
+Tinytest.addAsync(
+  'Non-fatal errors do not trigger cleanup',
+  async function (test) {
+    mockProcessExit();
+    await SyncedCron._reset();
+
+    // Create a long-running job
+    const testEntry = {
+      name: 'Non-Fatal Error Job',
+      schedule: function (parser) {
+        return parser.text('every 1 second');
+      },
+      job: async function () {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        return 'completed';
+      }
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the job but don't await it
+    SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Add another error handler to make the error non-fatal
+    const errorHandler = () => { };
+    process.on('uncaughtException', errorHandler);
+
+    // Simulate non-fatal error
+    process.emit('uncaughtException', new Error('Non-fatal error'));
+
+    // Wait a bit
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check the job history
+    const jobHistory = await SyncedCron._collection.findOneAsync();
+
+    test.isNotNull(jobHistory, 'Job history should exist');
+    test.equal(jobHistory.finishedAt, undefined, 'Job should not be marked as finished');
+    test.equal(jobHistory.terminatedBy, undefined, 'Job should not be marked as terminated');
+
+    // Cleanup
+    process.removeListener('uncaughtException', errorHandler);
+    restoreProcessExit();
+  }
+);
+
+Tinytest.addAsync(
+  'Jobs are tagged with process ID',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const testEntry = {
+      name: 'Process ID Test Job',
+      schedule(parser) {
+        return parser.text('every 1 second');
+      },
+      job() {
+        return 'completed';
+      },
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Run the job
+    await SyncedCron._entryWrapper(entry)(new Date());
+
+    // Check the job history
+    const jobHistory = await SyncedCron._collection.findOneAsync();
+
+    test.isNotNull(jobHistory, 'Job history should exist');
+    test.isNotNull(jobHistory.processId, 'Job should have a process ID');
+    test.equal(jobHistory.processId, SyncedCron.processId, 'Job process ID should match SyncedCron process ID');
+  }
+);
+
+Tinytest.addAsync(
+  'Cleanup only affects jobs from current process',
+  async (test) => {
+    mockProcessExit();
+    await SyncedCron._reset();
+
+    // Create two jobs with different process IDs
+    const currentProcessJob = {
+      name: 'Current Process Job',
+      intendedAt: new Date(),
+      startedAt: new Date(),
+      processId: SyncedCron.processId,
+    };
+
+    const otherProcessJob = {
+      name: 'Other Process Job',
+      intendedAt: new Date(),
+      startedAt: new Date(),
+      processId: 'other-process-id',
+    };
+
+    // Insert both jobs
+    await SyncedCron._collection.insertAsync(currentProcessJob);
+    await SyncedCron._collection.insertAsync(otherProcessJob);
+
+    // Simulate SIGTERM
+    process.emit('SIGTERM');
+
+    // Wait for cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Check the job histories
+    const currentProcessJobHistory = await SyncedCron._collection.findOneAsync(
+      { processId: SyncedCron.processId }
+    );
+    const otherProcessJobHistory = await SyncedCron._collection.findOneAsync(
+      { processId: 'other-process-id' }
+    );
+
+    test.isNotNull(currentProcessJobHistory, 'Current process job should exist');
+    test.isNotNull(otherProcessJobHistory, 'Other process job should exist');
+
+    // Current process job should be marked as terminated
+    test.isNotUndefined(currentProcessJobHistory.finishedAt, 'Current process job should be marked as finished');
+    test.equal(currentProcessJobHistory.terminatedBy, 'SIGTERM', 'Current process job should be marked as terminated by SIGTERM');
+
+    // Other process job should be untouched
+    test.isUndefined(otherProcessJobHistory.finishedAt, 'Other process job should not be marked as finished');
+    test.isUndefined(otherProcessJobHistory.terminatedBy, 'Other process job should not be marked as terminated');
+
+    restoreProcessExit();
+  }
+);
+
+Tinytest.addAsync(
+  'Process ID is consistent across job runs',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const testEntry = {
+      name: 'Process ID Consistency Job',
+      schedule(parser) {
+        return parser.text('every 1 second');
+      },
+      job() {
+        return 'completed';
+      },
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Run the job twice
+    await SyncedCron._entryWrapper(entry)(new Date());
+    await SyncedCron._entryWrapper(entry)(new Date(Date.now() + 1000));
+
+    // Get all job histories
+    const jobHistories = await SyncedCron._collection.find().fetchAsync();
+
+    test.equal(jobHistories.length, 2, 'Should have two job histories');
+
+    if (jobHistories.length >= 2) {
+      test.equal(
+        jobHistories[0].processId,
+        jobHistories[1].processId,
+        'Process ID should be consistent across job runs'
+      );
+      test.equal(
+        jobHistories[0].processId,
+        SyncedCron.processId,
+        'Job process ID should match SyncedCron process ID'
+      );
+    }
+  }
+);
+
+Tinytest.addAsync(
+  'Process exit is called on fatal errors',
+  async (test) => {
+    let exitCalled = false;
+    mockProcessExit();
+
+    // Override the mock to track if it was called
+    process.exit = () => {
+      exitCalled = true;
+    };
+
+    await SyncedCron._reset();
+
+    const testEntry = {
+      name: 'Fatal Error Job',
+      schedule(parser) {
+        return parser.text('every 1 second');
+      },
+      async job() {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return 'completed';
+      },
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the job
+    SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Simulate fatal error (with no other handlers)
+    process.emit('uncaughtException', new Error('Fatal error'));
+
+    // Wait for cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    test.isTrue(exitCalled, 'Process.exit should have been called');
+
+    restoreProcessExit();
   }
 );
