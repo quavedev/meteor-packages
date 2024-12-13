@@ -2,7 +2,7 @@
 SyncedCron = {
   _entries: {},
   running: false,
-  processId: `cron-${Date.now()}`,
+  processId: Random.id(),
   options: {
     //Log job run details to console
     log: true,

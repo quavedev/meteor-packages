@@ -13,7 +13,7 @@ Package.onUse(function (api) {
 
   api.use('ecmascript');
 
-  api.use(['check', 'mongo', 'logging'], 'server');
+  api.use(['check', 'mongo', 'logging', 'random'], 'server');
 
   api.addFiles(['synced-cron-server.js'], 'server');
 
@@ -21,7 +21,7 @@ Package.onUse(function (api) {
 });
 
 Package.onTest(function (api) {
-  api.use(['check', 'mongo'], 'server');
+  api.use(['check', 'mongo', 'random'], 'server');
   api.use(['tinytest', 'logging']);
 
   api.addFiles(['synced-cron-server.js', 'synced-cron-tests.js'], ['server']);
