@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2.2.1 (2024-11-19)
+## 2.2.1 (2024-12-13)
 
 - Add automatic cleanup of running jobs when the process encounters a fatal error (uncaught exceptions and unhandled rejections). The cleanup consists of marking the job as finished and adding a `terminatedBy` field to the job history collection to indicate how the job was terminated.
   - Add tests for the new functionality.
