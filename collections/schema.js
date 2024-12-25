@@ -798,14 +798,6 @@ function keepInsecure(c) {
       transform: null,
     };
 
-    if (Meteor.isFibersDisabled) {
-      Object.assign(allow, {
-        insertAsync: allow.insert,
-        updateAsync: allow.update,
-        removeAsync: allow.remove,
-      });
-    }
-
     c.allow(allow);
 
     alreadyInsecure[c._name] = true;
@@ -876,13 +868,6 @@ function defineDeny(c, options) {
       fetch: ['_id'],
       transform: null,
     };
-
-    if (Meteor.isFibersDisabled) {
-      Object.assign(firstDeny, {
-        insertAsync: firstDeny.insert,
-        updateAsync: firstDeny.update,
-      });
-    }
 
     c.deny(firstDeny);
 
@@ -959,13 +944,6 @@ function defineDeny(c, options) {
       fetch: ['_id'],
       ...(options.transform === true ? {} : { transform: null }),
     };
-
-    if (Meteor.isFibersDisabled) {
-      Object.assign(secondDeny, {
-        insertAsync: secondDeny.insert,
-        updateAsync: secondDeny.update,
-      });
-    }
 
     c.deny(secondDeny);
 

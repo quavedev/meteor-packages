@@ -1,8 +1,10 @@
 ## CHANGELOG
 
-### 3.1.1 (2024-12-09)
-Enhance persistable and softRemoval composers with `shouldFetchFullDoc` option
+### 3.1.2 (2024-12-25)
+- As Meteor 3.1.1 will remove async methods from allow package we are already removing them to avoid warnings.
 
+### 3.1.1 (2024-12-09)
+- Enhance persistable and softRemoval composers with `shouldFetchFullDoc` option
 - Updated the persistable composer to include a `shouldFetchFullDoc` parameter, allowing for the retrieval of the full existing document during operations.
 - Modified the softRemoval composer to also accept the `shouldFetchFullDoc` option, improving document handling before removal.
 - Adjusted related method signatures and documentation to reflect these changes, enhancing clarity and maintainability.
