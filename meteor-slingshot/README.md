@@ -404,6 +404,33 @@ Slingshot.createDirective("cloudflare-r2-example", Slingshot.CloudflareR2, {
 Cloudinary is supported via a 3rd party package.
 [jimmiebtlr:cloudinary](https://atmospherejs.com/jimmiebtlr/slingshot-cloudinary)
 
+### Oracle Object Storage (`Slingshot.OracleStorage`)
+
+Oracle Object Storage provides an S3 compatibility API that can be used for file uploads. You'll need to use the S3 compatibility endpoint and credentials.
+
+Required credentials:
+- `AccessKeyId` and `SecretAccessKey` - Generate these in Oracle Cloud Console under User Settings > Customer Secret Keys (S3 Credentials)
+- S3 Compatibility API endpoint - Format: `https://{namespace}.compat.objectstorage.{region}.oraclecloud.com`
+
+Example configuration:
+
+```JavaScript
+Slingshot.createDirective("oracle-storage-example", Slingshot.OracleStorage, {
+  bucket: "my-bucket", // Bucket name
+  region: "us-phoenix-1", // Region where your bucket is located
+  endpoint: "https://your-namespace.compat.objectstorage.us-phoenix-1.oraclecloud.com", // S3 compatibility endpoint
+  AccessKeyId: "your-access-key-id", // S3 Compatibility Access Key
+  SecretAccessKey: "your-secret-access-key", // S3 Compatibility Secret Key
+  key: async function (file) {
+    // Store file into a directory by the user's username
+    var user = await Meteor.users.findOneAsync(this.userId);
+    return user.username + "/" + file.name;
+  }
+});
+```
+
+Note: Since this implementation uses the S3 compatibility API, it follows the same authentication and request signing patterns as AWS S3. Make sure to use the S3 compatibility endpoint and credentials, not the native Oracle Object Storage ones.
+
 ## Browser Compatibility
 
 Currently the uploader uses `XMLHttpRequest 2` to upload the files, which is not
