@@ -202,11 +202,13 @@ Slingshot.Upload = function (directive, metaData) {
         );
       });
 
-      const method = self.instructions.service === "CloudflareR2" ? "PUT" : "POST";
-      const formData = self.instructions.service === "CloudflareR2" ? self.file : buildFormData();
-      
+      const servicesToUsePut = ['CloudflareR2', 'OracleStorage'];
+      const shouldUsePut = servicesToUsePut.includes(self.instructions.service);
+      const method = shouldUsePut ? "PUT" : "POST";
+      const formData = shouldUsePut ? self.file : buildFormData();
+
       xhr.open(method, self.instructions.upload, true);
-      
+
       _.each(self.instructions.headers, function (value, key) {
         xhr.setRequestHeader(key, value);
       });
