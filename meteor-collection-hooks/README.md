@@ -1,21 +1,15 @@
 # Meteor Collection Hooks
 
-![Test suite](https://github.com/Meteor-Community-Packages/meteor-collection-hooks/workflows/Test%20suite/badge.svg)
-![Code lint](https://github.com/Meteor-Community-Packages/meteor-collection-hooks/workflows/Code%20lint/badge.svg)
-![CodeQL Analysis](https://github.com/Meteor-Community-Packages/meteor-collection-hooks/workflows/CodeQL/badge.svg)
-
 Extends Mongo.Collection with `before`/`after` hooks for `insert`, `update`, `remove`, `find`, and `findOne`.
 
 Works across client, server or a mix. Also works when a client initiates a collection method and the server runs the hook, all while respecting the collection validators (allow/deny).
-
-Please refer to [History.md](History.md) for a summary of recent changes.
 
 ## Getting Started
 
 Installation:
 
 ```
-meteor add matb33:collection-hooks
+meteor add quave:collection-hooks
 ```
 
 ---
@@ -361,30 +355,6 @@ is only relevant to after-update hooks._
 
 ---
 
-## Maintainers
+## Notes
 
-Maintained by [Meteor Community Packages](https://github.com/Meteor-Community-Packages) and in particular by:
-
-- Mathieu Bouchard ([matb33](https://github.com/matb33))
-- Andrew Mao ([mizzao](https://github.com/mizzao))
-- Simon Fridlund ([zimme](https://github.com/zimme))
-- Jan Dvorak ([StorytellerCZ](https://github.com/StorytellerCZ))
-
-## Contributors
-
-- Eric Dobbertin ([aldeed](https://github.com/aldeed))
-- Kevin Kaland ([wizonesolutions](https://github.com/wizonesolutions))
-- Jonathan James ([jonjamz](https://github.com/jonjamz))
-- Dave Workman ([davidworkman9](https://github.com/davidworkman9))
-- Tarang Patel ([Tarangp](https://github.com/Tarangp))
-- Nathan Strauser ([nate-strauser](https://github.com/nate-strauser))
-- Hubert OG ([subhog](https://github.com/subhog))
-- Richard Lai ([rclai](https://github.com/rclai))
-- Sahebjot Singh ([raunaqrox](https://github.com/raunaqrox))
-- Aram Kocharyan ([aramk](https://github.com/aramk))
-- Pierre Ozoux ([pierreozoux](https://github.com/pierreozoux))
-- Tom Coleman ([tmeasday](https://github.com/tmeasday))
-- Eric Jackson ([repjackson](https://github.com/repjackson))
-- Koen Lav ([KoenLav](https://github.com/KoenLav))
-- Chris Pravetz ([cpravetz](https://github.com/cpravetz))
-- Jan Kuster ([jankapunkt](https://github.com/jankapunkt))
+This project was started from [MCP collection hooks package](https://github.com/Meteor-Community-Packages/meteor-collection-hooks)
