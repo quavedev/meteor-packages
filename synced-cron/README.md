@@ -43,7 +43,7 @@ You can also optionally provide the following functions:
   - `name`: A string containing the name of the job.
   - `intendedAt`: The Date object representing the intended execution time of the job.
 - `allowParallelExecution`: A boolean option that allows the same job to run in parallel if set to `true`. Default is `false`.
-- `timeoutToConsiderRunningForParallelExecution`: A number in milliseconds. If the job takes more time than this value and it's not finished, another instance of the job can be run in parallel. This option is only considered when `allowParallelExecution` is `true`.
+- `timeoutToConsiderRunningForParallelExecution`: A number in milliseconds. If the job takes more time than this value and it's not finished, another instance of the job can be run in parallel. This option is only considered when `allowParallelExecution` is `false`.
 
 
 To start processing your jobs, somewhere in your project add:
