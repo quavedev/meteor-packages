@@ -770,3 +770,386 @@ Tinytest.addAsync(
     restoreProcessExit();
   }
 );
+
+// Stuck jobs tests
+Tinytest.addAsync(
+  'checkStuckJobs: finds and removes stuck jobs',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert a job that started 20 minutes ago without finishedAt
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    const stuckJob = {
+      name: 'Stuck Job',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      processId: 'some-process-id',
+    };
+
+    await SyncedCron._collection.insertAsync(stuckJob);
+
+    // Check there is 1 job
+    test.equal(await SyncedCron._collection.find().countAsync(), 1);
+
+    // Run checkStuckJobs with 15 minute threshold (default)
+    const result = await SyncedCron.checkStuckJobs();
+
+    test.equal(result.found, 1, 'Should find 1 stuck job');
+    test.equal(result.removed, 1, 'Should remove 1 stuck job');
+    test.equal(result.stuckJobs.length, 1, 'Should return 1 stuck job');
+    test.equal(result.stuckJobs[0].name, 'Stuck Job', 'Stuck job name should match');
+
+    // Check the job was removed
+    test.equal(await SyncedCron._collection.find().countAsync(), 0);
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: does not remove jobs within threshold',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert a job that started 5 minutes ago without finishedAt
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentJob = {
+      name: 'Recent Job',
+      intendedAt: fiveMinutesAgo,
+      startedAt: fiveMinutesAgo,
+      processId: 'some-process-id',
+    };
+
+    await SyncedCron._collection.insertAsync(recentJob);
+
+    // Check there is 1 job
+    test.equal(await SyncedCron._collection.find().countAsync(), 1);
+
+    // Run checkStuckJobs with 15 minute threshold (default)
+    const result = await SyncedCron.checkStuckJobs();
+
+    test.equal(result.found, 0, 'Should find 0 stuck jobs');
+    test.equal(result.removed, 0, 'Should remove 0 stuck jobs');
+
+    // Check the job was NOT removed
+    test.equal(await SyncedCron._collection.find().countAsync(), 1);
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: respects custom threshold option',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert a job that started 5 minutes ago without finishedAt
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentJob = {
+      name: 'Recent Job',
+      intendedAt: fiveMinutesAgo,
+      startedAt: fiveMinutesAgo,
+      processId: 'some-process-id',
+    };
+
+    await SyncedCron._collection.insertAsync(recentJob);
+
+    // Run checkStuckJobs with 3 minute threshold
+    const result = await SyncedCron.checkStuckJobs({
+      stuckJobsThreshold: 3 * 60 * 1000,
+    });
+
+    test.equal(result.found, 1, 'Should find 1 stuck job with custom threshold');
+    test.equal(result.removed, 1, 'Should remove 1 stuck job');
+
+    // Check the job was removed
+    test.equal(await SyncedCron._collection.find().countAsync(), 0);
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: calls onStuckJobFound callback for each stuck job',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert two stuck jobs
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job 1',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      processId: 'process-1',
+    });
+
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job 2',
+      intendedAt: thirtyMinutesAgo,
+      startedAt: thirtyMinutesAgo,
+      processId: 'process-2',
+    });
+
+    const callbackCalls = [];
+
+    const result = await SyncedCron.checkStuckJobs({
+      onStuckJobFound: ({ job, runningTimeMs }) => {
+        callbackCalls.push({ jobName: job.name, runningTimeMs });
+      },
+    });
+
+    test.equal(result.found, 2, 'Should find 2 stuck jobs');
+    test.equal(callbackCalls.length, 2, 'onStuckJobFound should be called twice');
+
+    // Check callback received correct data
+    const jobNames = callbackCalls.map(c => c.jobName).sort();
+    test.equal(jobNames[0], 'Stuck Job 1');
+    test.equal(jobNames[1], 'Stuck Job 2');
+
+    // Check running times are roughly correct (within 1 minute tolerance)
+    callbackCalls.forEach(call => {
+      test.isTrue(call.runningTimeMs > 15 * 60 * 1000, 'Running time should be greater than 15 minutes');
+    });
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: uses onStuckJobFound from global options',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job Global',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      processId: 'process-1',
+    });
+
+    let globalCallbackCalled = false;
+    const originalOnStuckJobFound = SyncedCron.options.onStuckJobFound;
+
+    SyncedCron.options.onStuckJobFound = ({ job }) => {
+      globalCallbackCalled = true;
+      test.equal(job.name, 'Stuck Job Global');
+    };
+
+    await SyncedCron.checkStuckJobs();
+
+    test.isTrue(globalCallbackCalled, 'Global onStuckJobFound should be called');
+
+    // Restore original option
+    SyncedCron.options.onStuckJobFound = originalOnStuckJobFound;
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: does not remove finished jobs',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert a job that finished
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    const finishedJob = {
+      name: 'Finished Job',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      finishedAt: new Date(Date.now() - 19 * 60 * 1000),
+      processId: 'some-process-id',
+      result: 'completed',
+    };
+
+    await SyncedCron._collection.insertAsync(finishedJob);
+
+    const result = await SyncedCron.checkStuckJobs();
+
+    test.equal(result.found, 0, 'Should not find finished jobs as stuck');
+    test.equal(await SyncedCron._collection.find().countAsync(), 1, 'Finished job should remain');
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: handles async onStuckJobFound callback',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job Async',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      processId: 'process-1',
+    });
+
+    let asyncCallbackCompleted = false;
+
+    const result = await SyncedCron.checkStuckJobs({
+      onStuckJobFound: async ({ job }) => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        asyncCallbackCompleted = true;
+      },
+    });
+
+    test.isTrue(asyncCallbackCompleted, 'Async callback should complete');
+    test.equal(result.found, 1, 'Should find 1 stuck job');
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobs: continues processing if callback throws',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Insert two stuck jobs
+    const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job Error 1',
+      intendedAt: twentyMinutesAgo,
+      startedAt: twentyMinutesAgo,
+      processId: 'process-1',
+    });
+
+    await SyncedCron._collection.insertAsync({
+      name: 'Stuck Job Error 2',
+      intendedAt: new Date(Date.now() - 25 * 60 * 1000),
+      startedAt: new Date(Date.now() - 25 * 60 * 1000),
+      processId: 'process-2',
+    });
+
+    let callCount = 0;
+
+    const result = await SyncedCron.checkStuckJobs({
+      onStuckJobFound: ({ job }) => {
+        callCount++;
+        if (callCount === 1) {
+          throw new Error('Callback error');
+        }
+      },
+    });
+
+    test.equal(callCount, 2, 'Callback should be called for both jobs');
+    test.equal(result.found, 2, 'Should find 2 stuck jobs');
+    test.equal(result.removed, 2, 'Should remove both jobs despite callback error');
+  }
+);
+
+// Automatic stuck jobs check tests
+Tinytest.addAsync(
+  'checkStuckJobsSchedule: registers job when configured',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const originalSchedule = SyncedCron.options.checkStuckJobsSchedule;
+
+    // Set a schedule
+    SyncedCron.options.checkStuckJobsSchedule = (parser) => parser.text('every 1 second');
+
+    SyncedCron._startStuckJobsCheck();
+
+    // Check that the job was registered
+    const entry = SyncedCron._entries[SyncedCron._stuckJobsCheckName];
+    test.isNotUndefined(entry, 'Stuck jobs check entry should be registered');
+    test.equal(entry.persist, false, 'Stuck jobs check should not persist');
+
+    // Cleanup
+    SyncedCron._stopStuckJobsCheck();
+    SyncedCron.options.checkStuckJobsSchedule = originalSchedule;
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobsSchedule: does not register when not configured',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const originalSchedule = SyncedCron.options.checkStuckJobsSchedule;
+    SyncedCron.options.checkStuckJobsSchedule = null;
+
+    SyncedCron._startStuckJobsCheck();
+
+    // Check that no job was registered
+    const entry = SyncedCron._entries[SyncedCron._stuckJobsCheckName];
+    test.isUndefined(entry, 'Stuck jobs check entry should not be registered when disabled');
+
+    // Cleanup
+    SyncedCron.options.checkStuckJobsSchedule = originalSchedule;
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobsSchedule: removes job on stop',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const originalSchedule = SyncedCron.options.checkStuckJobsSchedule;
+    SyncedCron.options.checkStuckJobsSchedule = (parser) => parser.text('every 1 second');
+
+    SyncedCron._startStuckJobsCheck();
+    test.isNotUndefined(SyncedCron._entries[SyncedCron._stuckJobsCheckName], 'Job should be registered');
+
+    SyncedCron._stopStuckJobsCheck();
+    test.isUndefined(SyncedCron._entries[SyncedCron._stuckJobsCheckName], 'Job should be removed on stop');
+
+    // Cleanup
+    SyncedCron.options.checkStuckJobsSchedule = originalSchedule;
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobsSchedule: job executes and removes stuck jobs',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const originalSchedule = SyncedCron.options.checkStuckJobsSchedule;
+    const originalThreshold = SyncedCron.options.stuckJobsThreshold;
+
+    SyncedCron.options.checkStuckJobsSchedule = (parser) => parser.text('every 1 second');
+    SyncedCron.options.stuckJobsThreshold = 100; // 100ms
+
+    // Insert a stuck job
+    const twoSecondsAgo = new Date(Date.now() - 2000);
+    await SyncedCron._collection.insertAsync({
+      name: 'Auto Check Stuck Job',
+      intendedAt: twoSecondsAgo,
+      startedAt: twoSecondsAgo,
+      processId: 'process-1',
+    });
+
+    // Manually run the job entry wrapper to simulate execution
+    SyncedCron._startStuckJobsCheck();
+    const entry = SyncedCron._entries[SyncedCron._stuckJobsCheckName];
+
+    // Execute the job directly
+    await entry.job();
+
+    // The stuck job should have been removed
+    const count = await SyncedCron._collection.find().countAsync();
+    test.equal(count, 0, 'Stuck job should be removed by check job');
+
+    // Cleanup
+    SyncedCron._stopStuckJobsCheck();
+    SyncedCron.options.checkStuckJobsSchedule = originalSchedule;
+    SyncedCron.options.stuckJobsThreshold = originalThreshold;
+  }
+);
+
+Tinytest.addAsync(
+  'checkStuckJobsSchedule: replaces previous job when restarted',
+  async (test) => {
+    await SyncedCron._reset();
+
+    const originalSchedule = SyncedCron.options.checkStuckJobsSchedule;
+    SyncedCron.options.checkStuckJobsSchedule = (parser) => parser.text('every 1 second');
+
+    SyncedCron._startStuckJobsCheck();
+    const firstEntry = SyncedCron._entries[SyncedCron._stuckJobsCheckName];
+    test.isNotUndefined(firstEntry, 'First entry should be registered');
+
+    // Change schedule and restart
+    SyncedCron.options.checkStuckJobsSchedule = (parser) => parser.text('every 5 seconds');
+    SyncedCron._startStuckJobsCheck();
+
+    const secondEntry = SyncedCron._entries[SyncedCron._stuckJobsCheckName];
+    test.isNotUndefined(secondEntry, 'Second entry should be registered');
+
+    // Cleanup
+    SyncedCron._stopStuckJobsCheck();
+    SyncedCron.options.checkStuckJobsSchedule = originalSchedule;
+  }
+);

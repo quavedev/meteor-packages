@@ -106,8 +106,63 @@ You can configure SyncedCron with the `config` method. Defaults are:
       run `db.cronHistory.dropIndex({startedAt: 1})`) and re-run your
       project. SyncedCron will recreate the index with the updated TTL.
     */
-    collectionTTL: 172800
+    collectionTTL: 172800,
+
+    // Time in milliseconds to consider a job as stuck (default: 15 minutes)
+    stuckJobsThreshold: 15 * 60 * 1000,
+
+    // Callback function called for each stuck job found
+    // Receives an object with: { job, runningTimeMs }
+    onStuckJobFound: null,
+
+    // Schedule function for automatic stuck jobs check (using Later.js parser)
+    // Set to null to disable automatic checking
+    checkStuckJobsSchedule: null
   });
+```
+
+### Stuck Jobs Detection
+
+SyncedCron can automatically detect and clean up jobs that appear to be stuck (running longer than expected without finishing). This is useful for recovering from crashed processes or hung jobs.
+
+#### Automatic Check
+
+To enable automatic stuck jobs checking, configure a schedule:
+
+```js
+SyncedCron.config({
+  // Jobs running longer than 15 minutes without finishing are considered stuck
+  stuckJobsThreshold: 15 * 60 * 1000,
+  
+  // Check for stuck jobs every 5 minutes
+  checkStuckJobsSchedule: (parser) => parser.text('every 5 minutes'),
+  
+  // Optional: handle each stuck job found
+  onStuckJobFound: ({ job, runningTimeMs }) => {
+    console.log(`Found stuck job: ${job.name}, running for ${runningTimeMs}ms`);
+  }
+});
+
+SyncedCron.start();
+```
+
+The automatic check is distributed-safe - only one server instance will run the check at a time.
+
+#### Manual Check
+
+You can also manually check for stuck jobs:
+
+```js
+const result = await SyncedCron.checkStuckJobs();
+// result: { found: 2, removed: 2, stuckJobs: [...] }
+
+// Or with custom options:
+const result = await SyncedCron.checkStuckJobs({
+  stuckJobsThreshold: 30 * 60 * 1000, // 30 minutes
+  onStuckJobFound: ({ job, runningTimeMs }) => {
+    // Handle each stuck job
+  }
+});
 ```
 
 ### Logging

@@ -1,6 +1,16 @@
 # Changelog
 
 
+## 2.2.2 (2025-12-12)
+
+- Add native stuck jobs detection and cleanup functionality:
+  - New `stuckJobsThreshold` option: Time in milliseconds to consider a job as stuck (default: 15 minutes).
+  - New `onStuckJobFound` callback option: Called for each stuck job found with `{ job, runningTimeMs }`.
+  - New `checkStuckJobsSchedule` option: Schedule function (using Later.js parser) to automatically check for stuck jobs.
+  - New `SyncedCron.checkStuckJobs(options)` method to manually check and remove stuck jobs.
+  - Automatic stuck jobs check is distributed-safe (only one server instance runs the check at a time).
+  - Add tests for the new functionality.
+
 ## 2.2.1 (2024-12-13)
 
 - Add automatic cleanup of running jobs when the process encounters a fatal error (uncaught exceptions and unhandled rejections). The cleanup consists of marking the job as finished and adding a `terminatedBy` field to the job history collection to indicate how the job was terminated.

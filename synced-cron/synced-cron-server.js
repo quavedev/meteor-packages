@@ -3,6 +3,7 @@ SyncedCron = {
   _entries: {},
   running: false,
   processId: Random.id(),
+  _stuckJobsCheckName: '__SyncedCron_checkStuckJobs__',
   options: {
     //Log job run details to console
     log: true,
@@ -20,6 +21,19 @@ SyncedCron = {
     //NOTE: Unset to remove expiry but ensure you remove the index from
     //mongo by hand
     collectionTTL: 172800,
+
+    // Time in milliseconds to consider a job as stuck (default: 15 minutes)
+    // Jobs running longer than this without finishing will be considered stuck
+    stuckJobsThreshold: 15 * 60 * 1000,
+
+    // Callback function called for each stuck job found
+    // Receives an object with: { job, runningTimeMs }
+    onStuckJobFound: null,
+
+    // Schedule function for automatic stuck jobs check (using Later.js parser)
+    // Example: (parser) => parser.text('every 5 minutes')
+    // Set to null to disable automatic checking
+    checkStuckJobsSchedule: null,
   },
   config: function (opts) {
     this.options = Object.assign({}, this.options, opts);
@@ -233,7 +247,38 @@ SyncedCron.start = function () {
       scheduleEntry(entry);
     });
     self.running = true;
+
+    // Start automatic stuck jobs check if configured
+    self._startStuckJobsCheck();
   });
+};
+
+// Start the automatic stuck jobs check as a cron job
+SyncedCron._startStuckJobsCheck = function () {
+  const schedule = this.options.checkStuckJobsSchedule;
+
+  // Remove any existing stuck jobs check
+  this._stopStuckJobsCheck();
+
+  if (typeof schedule === 'function') {
+    const self = this;
+
+    this.add({
+      name: this._stuckJobsCheckName,
+      schedule: schedule,
+      persist: false,
+      job: async function () {
+        await self.checkStuckJobs();
+      },
+    });
+  }
+};
+
+// Stop the automatic stuck jobs check
+SyncedCron._stopStuckJobsCheck = function () {
+  if (this._entries[this._stuckJobsCheckName]) {
+    this.remove(this._stuckJobsCheckName);
+  }
 };
 
 // Return the next scheduled date of the first matching entry or undefined
@@ -262,6 +307,7 @@ SyncedCron.pause = function () {
     Object.values(this._entries).forEach(function pauseEntry(entry) {
       entry._timer.clear();
     });
+    this._stopStuckJobsCheck();
     this.running = false;
   }
 };
@@ -271,7 +317,67 @@ SyncedCron.stop = function () {
   Object.values(this._entries).forEach(function stopEntry(entry) {
     SyncedCron.remove(entry.name);
   });
+  this._stopStuckJobsCheck();
   this.running = false;
+};
+
+// Check for and handle stuck jobs
+// Returns an object with { found: number, removed: number, stuckJobs: Array }
+SyncedCron.checkStuckJobs = async function (options = {}) {
+  const threshold = options.stuckJobsThreshold ?? this.options.stuckJobsThreshold;
+  const onStuckJobFound = options.onStuckJobFound ?? this.options.onStuckJobFound;
+
+  const thresholdDate = new Date(Date.now() - threshold);
+  const selector = {
+    startedAt: { $lt: thresholdDate },
+    finishedAt: { $exists: false },
+  };
+
+  const stuckJobs = await this._collection.find(selector).fetchAsync();
+
+  if (!stuckJobs.length) {
+    log.info('No stuck jobs found');
+    return { found: 0, removed: 0, stuckJobs: [] };
+  }
+
+  log.warn(`Found ${stuckJobs.length} stuck job(s)`);
+
+  const now = Date.now();
+
+  // Process each stuck job
+  for (const job of stuckJobs) {
+    const runningTimeMs = now - job.startedAt.getTime();
+    const runningTimeMinutes = Math.floor(runningTimeMs / 60000);
+
+    log.warn(
+      `Stuck job found - Name: ${job.name}, ` +
+      `Started at: ${job.startedAt.toISOString()}, ` +
+      `Running time: ${runningTimeMinutes} minutes, ` +
+      `Job ID: ${job._id}`
+    );
+
+    // Call the onStuckJobFound callback if provided
+    if (typeof onStuckJobFound === 'function') {
+      try {
+        await onStuckJobFound({ job, runningTimeMs })
+      } catch (e) {
+        log.error(`Error in onStuckJobFound callback for job "${job.name}": ${e && e.stack ? e.stack : e}`);
+      }
+    }
+  }
+
+  // Remove stuck jobs from the collection
+  const result = await this._collection.removeAsync({
+    _id: { $in: stuckJobs.map((job) => job._id) },
+  });
+
+  log.info(`Finished stuck jobs check. Total removed: ${result} job(s)`);
+
+  return {
+    found: stuckJobs.length,
+    removed: result,
+    stuckJobs,
+  };
 };
 
 // The meat of our logic. Checks if the specified has already run. If not,
@@ -383,6 +489,7 @@ SyncedCron._entryWrapper = function (entry) {
 
 // for tests
 SyncedCron._reset = async function () {
+  this._stopStuckJobsCheck();
   this._entries = {};
   await this._collection.removeAsync({});
   this.running = false;
