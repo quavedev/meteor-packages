@@ -1,6 +1,15 @@
 # Changelog
 
 
+## 2.3.0 (2025-01-16)
+
+- Add automatic cleanup of blocked jobs from crashed processes on startup. This handles the case where a server crashes without gracefully terminating, leaving jobs without `finishedAt` in the collection.
+  - Add `blockedJobTimeoutMs` config option (default: 30 minutes) - Jobs without `finishedAt` older than this are considered blocked. Used ONLY for startup cleanup.
+  - Add `cleanupBlockedJobsOnStartup` config option (default: true) - When enabled, blocked jobs from OTHER processes are automatically cleaned up on server startup.
+  - Add `terminatedBy: 'BLOCKED_ON_STARTUP'` field to jobs cleaned up on startup.
+  - Note: For parallel execution timeouts, continue using `timeoutToConsiderRunningForParallelExecution` per-job.
+  - Add comprehensive tests for the new functionality.
+
 ## 2.2.1 (2024-12-13)
 
 - Add automatic cleanup of running jobs when the process encounters a fatal error (uncaught exceptions and unhandled rejections). The cleanup consists of marking the job as finished and adding a `terminatedBy` field to the job history collection to indicate how the job was terminated.

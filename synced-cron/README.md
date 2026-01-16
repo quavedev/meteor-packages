@@ -106,9 +106,40 @@ You can configure SyncedCron with the `config` method. Defaults are:
       run `db.cronHistory.dropIndex({startedAt: 1})`) and re-run your
       project. SyncedCron will recreate the index with the updated TTL.
     */
-    collectionTTL: 172800
+    collectionTTL: 172800,
+
+    /*
+      Timeout in milliseconds to consider a job "blocked" (default: 30 minutes).
+      Jobs without finishedAt older than this will be marked as blocked.
+      This is used ONLY for startup cleanup of jobs from crashed processes.
+      Note: For parallel execution timeouts, use timeoutToConsiderRunningForParallelExecution
+      per-job instead.
+      Set to null or 0 to disable startup cleanup.
+    */
+    blockedJobTimeoutMs: 30 * 60 * 1000,
+
+    /*
+      Whether to cleanup blocked jobs from other crashed processes on startup.
+      When enabled, jobs from other processes that have been running longer
+      than blockedJobTimeoutMs will be marked as terminated on startup.
+      Default: true
+    */
+    cleanupBlockedJobsOnStartup: true
   });
 ```
+
+### Blocked Jobs Cleanup
+
+SyncedCron automatically handles "blocked" jobs - jobs that never received a `finishedAt` timestamp, usually due to server crashes or unexpected terminations.
+
+**Automatic cleanup on startup**: When `cleanupBlockedJobsOnStartup` is enabled (default), SyncedCron will automatically mark blocked jobs from OTHER crashed processes as terminated when the server starts. Jobs from the current process are never affected.
+
+**Graceful shutdown**: SyncedCron automatically handles `SIGTERM`, `SIGINT`, `uncaughtException`, and `unhandledRejection` signals to mark running jobs from the current process as terminated before shutdown.
+
+The cleanup adds a `terminatedBy` field to identify how the job was terminated:
+- `SIGTERM` / `SIGINT`: Graceful shutdown signal
+- `UNCAUGHT_EXCEPTION` / `UNHANDLED_REJECTION`: Fatal error
+- `BLOCKED_ON_STARTUP`: Cleaned up when server started
 
 ### Logging
 

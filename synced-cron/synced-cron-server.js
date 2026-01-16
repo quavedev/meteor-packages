@@ -20,6 +20,13 @@ SyncedCron = {
     //NOTE: Unset to remove expiry but ensure you remove the index from
     //mongo by hand
     collectionTTL: 172800,
+
+    // Timeout in ms to consider a job blocked (default: 30 minutes)
+    // Jobs without finishedAt older than this will be marked as blocked
+    blockedJobTimeoutMs: 30 * 60 * 1000,
+
+    // Whether to cleanup blocked jobs from other crashed processes on startup
+    cleanupBlockedJobsOnStartup: true,
   },
   config: function (opts) {
     this.options = Object.assign({}, this.options, opts);
@@ -170,6 +177,11 @@ Meteor.startup(async function syncedCronStartup() {
 
   process.on('uncaughtException', handleUncaughtException);
   process.on('unhandledRejection', handleUnhandledRejection);
+
+  // Cleanup blocked jobs from crashed processes on startup
+  if (options.cleanupBlockedJobsOnStartup && options.blockedJobTimeoutMs) {
+    await SyncedCron._cleanupBlockedJobs();
+  }
 });
 
 const scheduleEntry = function (entry) {
@@ -379,6 +391,38 @@ SyncedCron._entryWrapper = function (entry) {
       }
     }
   };
+};
+
+// Internal function to cleanup blocked jobs from other processes on startup
+SyncedCron._cleanupBlockedJobs = async function () {
+  const options = this.options;
+
+  if (!options.blockedJobTimeoutMs) {
+    return 0;
+  }
+
+  const timeoutThreshold = new Date(Date.now() - options.blockedJobTimeoutMs);
+
+  const result = await this._collection.updateAsync(
+    {
+      finishedAt: { $exists: false },
+      processId: { $ne: this.processId }, // Only other processes
+      startedAt: { $lt: timeoutThreshold },
+    },
+    {
+      $set: {
+        finishedAt: new Date(),
+        terminatedBy: 'BLOCKED_ON_STARTUP',
+      },
+    },
+    { multi: true }
+  );
+
+  if (result > 0) {
+    log.info(`Cleaned up ${result} blocked jobs on startup`);
+  }
+
+  return result;
 };
 
 // for tests

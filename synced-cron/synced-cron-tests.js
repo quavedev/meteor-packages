@@ -770,3 +770,104 @@ Tinytest.addAsync(
     restoreProcessExit();
   }
 );
+
+Tinytest.addAsync(
+  '_cleanupBlockedJobs cleans up jobs from other processes on startup',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Set a short timeout for testing
+    const originalTimeout = SyncedCron.options.blockedJobTimeoutMs;
+    SyncedCron.options.blockedJobTimeoutMs = 100; // 100ms
+
+    // Create a blocked job from another process (old startedAt)
+    const blockedJob = {
+      name: 'Blocked Job From Other Process',
+      intendedAt: new Date(Date.now() - 1000),
+      startedAt: new Date(Date.now() - 500), // Started 500ms ago
+      processId: 'other-crashed-process-id',
+    };
+
+    // Create a running job from current process (should not be cleaned up)
+    const currentProcessJob = {
+      name: 'Current Process Job',
+      intendedAt: new Date(Date.now() - 1000),
+      startedAt: new Date(Date.now() - 500),
+      processId: SyncedCron.processId,
+    };
+
+    // Create a recent job from another process (should not be cleaned up)
+    const recentJob = {
+      name: 'Recent Job From Other Process',
+      intendedAt: new Date(),
+      startedAt: new Date(), // Just started
+      processId: 'another-process-id',
+    };
+
+    await SyncedCron._collection.insertAsync(blockedJob);
+    await SyncedCron._collection.insertAsync(currentProcessJob);
+    await SyncedCron._collection.insertAsync(recentJob);
+
+    // Run cleanup (simulating startup)
+    const cleanedUp = await SyncedCron._cleanupBlockedJobs();
+
+    test.equal(cleanedUp, 1, 'Should clean up exactly 1 job');
+
+    // Verify blocked job was cleaned up
+    const blockedJobAfter = await SyncedCron._collection.findOneAsync({
+      name: 'Blocked Job From Other Process',
+    });
+    test.isNotUndefined(blockedJobAfter.finishedAt, 'Blocked job should have finishedAt');
+    test.equal(blockedJobAfter.terminatedBy, 'BLOCKED_ON_STARTUP', 'Should be marked as startup cleanup');
+
+    // Verify current process job was NOT cleaned up
+    const currentProcessJobAfter = await SyncedCron._collection.findOneAsync({
+      name: 'Current Process Job',
+    });
+    test.isUndefined(currentProcessJobAfter.finishedAt, 'Current process job should not have finishedAt');
+
+    // Verify recent job was NOT cleaned up
+    const recentJobAfter = await SyncedCron._collection.findOneAsync({
+      name: 'Recent Job From Other Process',
+    });
+    test.isUndefined(recentJobAfter.finishedAt, 'Recent job should not have finishedAt');
+
+    // Restore original timeout
+    SyncedCron.options.blockedJobTimeoutMs = originalTimeout;
+  }
+);
+
+Tinytest.addAsync(
+  '_cleanupBlockedJobs returns 0 when blockedJobTimeoutMs is not set',
+  async (test) => {
+    await SyncedCron._reset();
+
+    // Disable the timeout
+    const originalTimeout = SyncedCron.options.blockedJobTimeoutMs;
+    SyncedCron.options.blockedJobTimeoutMs = null;
+
+    // Create a blocked job
+    const blockedJob = {
+      name: 'Blocked Job No Timeout',
+      intendedAt: new Date(Date.now() - 1000),
+      startedAt: new Date(Date.now() - 500),
+      processId: 'crashed-process-id',
+    };
+
+    await SyncedCron._collection.insertAsync(blockedJob);
+
+    // Run cleanup - should return 0 because timeout is not set
+    const cleanedUp = await SyncedCron._cleanupBlockedJobs();
+
+    test.equal(cleanedUp, 0, 'Should return 0 when blockedJobTimeoutMs is not set');
+
+    // Verify job was NOT cleaned up
+    const blockedJobAfter = await SyncedCron._collection.findOneAsync({
+      name: 'Blocked Job No Timeout',
+    });
+    test.isUndefined(blockedJobAfter.finishedAt, 'Job should not have finishedAt');
+
+    // Restore original timeout
+    SyncedCron.options.blockedJobTimeoutMs = originalTimeout;
+  }
+);
