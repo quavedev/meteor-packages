@@ -124,7 +124,16 @@ You can configure SyncedCron with the `config` method. Defaults are:
       than blockedJobTimeoutMs will be marked as terminated on startup.
       Default: true
     */
-    cleanupBlockedJobsOnStartup: true
+    cleanupBlockedJobsOnStartup: true,
+
+    /*
+      If true, SyncedCron will NOT call process.exit() after handling
+      signals (SIGTERM, SIGINT) or fatal errors (uncaughtException,
+      unhandledRejection). Set this to true if you want Meteor or
+      another handler to control the process lifecycle.
+      Default: false
+    */
+    noProcessExit: false
   });
 ```
 
@@ -134,7 +143,7 @@ SyncedCron automatically handles "blocked" jobs - jobs that never received a `fi
 
 **Automatic cleanup on startup**: When `cleanupBlockedJobsOnStartup` is enabled (default), SyncedCron will automatically mark blocked jobs from OTHER crashed processes as terminated when the server starts. Jobs from the current process are never affected.
 
-**Graceful shutdown**: SyncedCron automatically handles `SIGTERM`, `SIGINT`, `uncaughtException`, and `unhandledRejection` signals to mark running jobs from the current process as terminated before shutdown.
+**Graceful shutdown**: SyncedCron automatically handles `SIGTERM`, `SIGINT`, `uncaughtException`, and `unhandledRejection` signals to mark running jobs from the current process as terminated before shutdown. By default, SyncedCron will also call `process.exit()` after cleanup. Set `noProcessExit: true` to disable this behavior and let Meteor (or other handlers) control the process lifecycle.
 
 The cleanup adds a `terminatedBy` field to identify how the job was terminated:
 - `SIGTERM` / `SIGINT`: Graceful shutdown signal

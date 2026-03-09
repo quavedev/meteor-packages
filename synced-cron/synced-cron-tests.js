@@ -772,6 +772,57 @@ Tinytest.addAsync(
 );
 
 Tinytest.addAsync(
+  'Process exit is NOT called when noProcessExit is true',
+  async (test) => {
+    let exitCalled = false;
+    mockProcessExit();
+
+    // Override the mock to track if it was called
+    process.exit = () => {
+      exitCalled = true;
+    };
+
+    // Enable noProcessExit
+    const originalNoProcessExit = SyncedCron.options.noProcessExit;
+    SyncedCron.options.noProcessExit = true;
+
+    await SyncedCron._reset();
+
+    const testEntry = {
+      name: 'No Exit Job',
+      schedule(parser) {
+        return parser.text('every 1 second');
+      },
+      async job() {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return 'completed';
+      },
+    };
+
+    SyncedCron.add(testEntry);
+    const entry = SyncedCron._entries[testEntry.name];
+
+    // Start the job
+    SyncedCron._entryWrapper(entry)(new Date());
+
+    // Wait a bit to ensure the job has started
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Simulate fatal error (with no other handlers)
+    process.emit('uncaughtException', new Error('Fatal error'));
+
+    // Wait for cleanup to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    test.isFalse(exitCalled, 'Process.exit should NOT have been called when noProcessExit is true');
+
+    // Restore
+    SyncedCron.options.noProcessExit = originalNoProcessExit;
+    restoreProcessExit();
+  }
+);
+
+Tinytest.addAsync(
   '_cleanupBlockedJobs cleans up jobs from other processes on startup',
   async (test) => {
     await SyncedCron._reset();
