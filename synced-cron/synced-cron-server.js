@@ -155,7 +155,7 @@ Meteor.startup(async function syncedCronStartup() {
       SyncedCron.pause();
 
       await cleanupRunningJobs(signal)
-      if (!options.noProcessExit) {
+      if (!SyncedCron.options.noProcessExit) {
         process.exit(signal === 'SIGINT' ? 130 : 143);
       }
     }));
@@ -168,7 +168,7 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('uncaughtException') === 1) {
       await cleanupRunningJobs('UNCAUGHT_EXCEPTION');
-      if (!options.noProcessExit) {
+      if (!SyncedCron.options.noProcessExit) {
         process.exit(1);
       }
     }
@@ -180,7 +180,7 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('unhandledRejection') === 1) {
       await cleanupRunningJobs('UNHANDLED_REJECTION');
-      if (!options.noProcessExit) {
+      if (!SyncedCron.options.noProcessExit) {
         process.exit(1);
       }
     }
