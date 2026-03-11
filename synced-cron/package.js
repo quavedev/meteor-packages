@@ -1,7 +1,7 @@
 Package.describe({
   summary:
     'Allows you to define and run scheduled jobs across multiple servers.',
-  version: '2.3.1',
+  version: '2.4.0',
   name: 'quave:synced-cron',
   git: 'https://github.com/quavedev/meteor-synced-cron.git',
 });

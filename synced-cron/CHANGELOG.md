@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2.3.1
+## 2.4.0
 
 - Add `noProcessExit` config option (default: `false`). When set to `true`, SyncedCron will not call `process.exit()` after handling signals or fatal errors, allowing Meteor or other handlers to control the process lifecycle. Fixes [#15](https://github.com/quavedev/meteor-packages/issues/15).
 - Fix exit codes: use proper exit codes instead of always exiting with 0 — `SIGINT` exits with 130, `SIGTERM` with 143, and fatal errors with 1.
