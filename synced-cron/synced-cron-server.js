@@ -27,6 +27,11 @@ SyncedCron = {
 
     // Whether to cleanup blocked jobs from other crashed processes on startup
     cleanupBlockedJobsOnStartup: true,
+
+    // If true, SyncedCron will not call process.exit() after handling signals
+    // or fatal errors. Set this to true if you want Meteor (or another handler)
+    // to control the process lifecycle.
+    noProcessExit: false,
   },
   config: function (opts) {
     this.options = Object.assign({}, this.options, opts);
@@ -150,7 +155,9 @@ Meteor.startup(async function syncedCronStartup() {
       SyncedCron.pause();
 
       await cleanupRunningJobs(signal)
-      process.exit(0);
+      if (!SyncedCron.options.noProcessExit) {
+        process.exit(signal === 'SIGINT' ? 130 : 143);
+      }
     }));
   });
 
@@ -161,7 +168,9 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('uncaughtException') === 1) {
       await cleanupRunningJobs('UNCAUGHT_EXCEPTION');
-      process.exit(0);
+      if (!SyncedCron.options.noProcessExit) {
+        process.exit(1);
+      }
     }
   });
 
@@ -171,7 +180,9 @@ Meteor.startup(async function syncedCronStartup() {
     // Only cleanup if there are no other error handlers
     if (process.listenerCount('unhandledRejection') === 1) {
       await cleanupRunningJobs('UNHANDLED_REJECTION');
-      process.exit(0);
+      if (!SyncedCron.options.noProcessExit) {
+        process.exit(1);
+      }
     }
   });
 
