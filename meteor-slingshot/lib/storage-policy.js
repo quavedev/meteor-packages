@@ -96,7 +96,7 @@ Slingshot.StoragePolicy = function () {
 
     stringify: function (encoding) {
       /* global Buffer: false */
-      return Buffer(JSON.stringify(policy), 'utf-8').toString(
+      return Buffer.from(JSON.stringify(policy), 'utf-8').toString(
         encoding || 'base64'
       );
     },
