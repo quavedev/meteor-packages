@@ -1,5 +1,11 @@
 # Slingshot Changelog
 
+## Version 2.0.4
+
+### Enhancements
+
+- Replace deprecated Buffer() / new Buffer()
+
 ## Version 0.7.1
 
 ### Enhancements
