@@ -71,6 +71,40 @@ Tinytest.addAsync('Exceptions work', async function (test) {
 });
 
 Tinytest.addAsync(
+  'Cron jobs preserve userId in nested Meteor.callAsync calls',
+  async function (test) {
+    await SyncedCron._reset();
+
+    const methodName = `syncedCronGetUserId_${Random.id()}`;
+    const expectedUserId = Random.id();
+    let nestedMethodUserId;
+
+    Meteor.methods({
+      [methodName]: function () {
+        return this.userId;
+      },
+    });
+
+    SyncedCron.add({
+      name: `User Context Job ${Random.id()}`,
+      userId: expectedUserId,
+      schedule: TestEntry.schedule,
+      job: async function () {
+        nestedMethodUserId = await Meteor.callAsync(methodName);
+
+        return nestedMethodUserId;
+      },
+    });
+
+    const entry = Object.values(SyncedCron._entries)[0];
+
+    await SyncedCron._entryWrapper(entry)(new Date());
+
+    test.equal(nestedMethodUserId, expectedUserId);
+  }
+);
+
+Tinytest.addAsync(
   'SyncedCron.nextScheduledAtDate works',
   async function (test) {
     await SyncedCron._reset();
