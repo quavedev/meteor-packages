@@ -1,0 +1,16 @@
+node_modules/
+**/.idea/*
+# if you remove the above rule, at least ignore the following:
+
+# User-specific stuff:
+!.idea/workspace.cp.xml
+!.idea/codeStyleSettings.xml
+!.idea/encodings.xml
+!.idea/runConfigurations
+
+yarn-error.log
+package-lock.json
+
+.DS_store
+
+.npm
