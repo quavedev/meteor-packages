@@ -84,6 +84,23 @@ const partial =
   (...remainingArgs) =>
     func(...boundArgs, ...remainingArgs);
 
+function createCronMethodInvocation(entry) {
+  let invocation;
+
+  invocation = new DDPCommon.MethodInvocation({
+    isSimulation: false,
+    userId: entry.userId ?? null,
+    setUserId(userId) {
+      entry.userId = userId;
+      invocation.userId = userId;
+    },
+    connection: entry.connection ?? null,
+    randomSeed: entry.randomSeed ?? null,
+  });
+
+  return invocation;
+}
+
 Meteor.startup(async function syncedCronStartup() {
   const options = SyncedCron.options;
 
@@ -367,7 +384,11 @@ SyncedCron._entryWrapper = function (entry) {
     // run and record the job
     try {
       log.info(`Starting "${entry.name}".`);
-      const output = await entry.job(intendedAt, entry.name); // <- Run the actual job
+      const invocation = createCronMethodInvocation(entry);
+      const output = await DDP._CurrentMethodInvocation.withValue(
+        invocation,
+        () => entry.job.call(entry, intendedAt, entry.name)
+      );
 
       log.info(`Finished "${entry.name}".`);
       if (entry.persist) {
