@@ -79,7 +79,7 @@ export function createDurableQueue({
       finally { renewing = false; }
     }, Math.floor(leaseDurationMs / 3));
     try {
-      await handlers.get(job.type)(EJSON.clone(job.data), {
+      await handlers.get(job.type)(EJSON.parse(job.payload), {
         id: job._id,
         attempt: job.attempts,
         leaseToken: job.leaseToken,
@@ -165,7 +165,6 @@ export function createDurableQueue({
       positiveInteger(maxAttempts, 'maxAttempts');
       positiveInteger(retryDelayMs, 'retryDelayMs');
       // Validate/copy as data, never persist executable functions or closures.
-      const payload = EJSON.clone(data);
       const rejectFunctions = (value) => {
         if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
           throw new Error('data must be EJSON serializable');
@@ -173,8 +172,10 @@ export function createDurableQueue({
         if (value && typeof value === 'object') Object.values(value).forEach(rejectFunctions);
       };
       rejectFunctions(data);
+      const payload = EJSON.stringify(data);
+      if (typeof payload !== 'string') throw new Error('data must be EJSON serializable');
       await initialize();
-      const definition = { type, runAt, scheduledAt: runAt, data: payload, maxAttempts, retryDelayMs };
+      const definition = { type, runAt, scheduledAt: runAt, payload, maxAttempts, retryDelayMs };
       try {
         await raw.updateOne({ _id: id }, {
           $setOnInsert: { ...definition, status: 'pending', attempts: 0, createdAt: new Date() },
@@ -186,7 +187,7 @@ export function createDurableQueue({
       // Never resurrect completed/cancelled work by re-enqueueing its identity.
       // runAt changes during retries; scheduledAt remains immutable.
       if (existing.type !== type || !EJSON.equals(existing.scheduledAt, runAt) ||
-          !EJSON.equals(existing.data, payload) ||
+          !EJSON.equals(EJSON.parse(existing.payload), EJSON.parse(payload)) ||
           existing.maxAttempts !== maxAttempts || existing.retryDelayMs !== retryDelayMs) {
         throw new Error(`Durable job id already has a different definition: ${id}`);
       }
@@ -194,7 +195,8 @@ export function createDurableQueue({
     },
     async get(id) {
       nonemptyString(id, 'id');
-      return raw.findOne({ _id: id });
+      const job = await raw.findOne({ _id: id });
+      return job ? { ...job, data: EJSON.parse(job.payload) } : null;
     },
     async cancel(id) {
       nonemptyString(id, 'id');

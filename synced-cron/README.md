@@ -236,7 +236,9 @@ handler, or promises exactly-once business effects.
 - `enqueue()` is idempotent for an identical definition. Reusing an ID with a
   different definition throws; it never resurrects terminal work. To reschedule,
   cancel the old execution and create a new ID.
-- `get(id)` returns the persisted job, including status, attempts and last error.
+- `get(id)` returns the persisted job, including decoded `data`, status, attempts
+  and last error. MongoDB stores the payload as an EJSON string to preserve dates,
+  binary and custom EJSON types. Optional undefined object fields are omitted.
 - `cancel(id)` cancels pending/running work and invalidates ownership.
 - `execution.fail(message)` fails permanently, without automatic retry.
 - `stop()` stops polling and waits for active handlers while renewing their leases.

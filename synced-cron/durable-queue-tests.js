@@ -1,6 +1,7 @@
 import { createDurableQueue } from './durable-queue';
 import { MongoInternals } from 'meteor/mongo';
 import { Random } from 'meteor/random';
+import { EJSON } from 'meteor/ejson';
 
 const testQueue = () => {
   const collectionName = `durable_tests_${Random.id()}`;
@@ -167,4 +168,22 @@ suite('renewal extends ownership and rejects expired ownership', async (test, { 
   await queue.enqueue(job);
   await queue.runOnce();
   test.equal((await queue.get(job.id)).status, 'running');
+});
+
+
+suite('EJSON dates and binary survive storage; optional fields are normalized', async (test, { queue }) => {
+  const binary = EJSON.newBinary(3);
+  binary[0] = 7;
+  const data = { date: new Date(1000), binary, omitted: undefined };
+  const job = { ...definition(), data };
+  queue.register('task', async (received) => {
+    test.equal(received.date, data.date);
+    test.isTrue(EJSON.isBinary(received.binary));
+    test.equal(received.binary[0], 7);
+    test.equal(received.omitted, undefined);
+  });
+  await queue.enqueue(job);
+  await queue.enqueue(job);
+  await queue.runOnce();
+  test.equal((await queue.get(job.id)).status, 'completed');
 });
