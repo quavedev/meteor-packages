@@ -1,6 +1,9 @@
+import { createDurableQueue } from './durable-queue';
+
 // A package for running jobs synchronized across multiple processes
 SyncedCron = {
   _entries: {},
+  createDurableQueue,
   running: false,
   processId: Random.id(),
   options: {

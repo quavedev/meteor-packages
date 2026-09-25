@@ -189,3 +189,77 @@ Write some code. Write some tests. To run the tests, do:
 ``` sh
 $ meteor test-packages ./
 ```
+
+## Durable one-off jobs (opt in)
+
+`SyncedCron.createDurableQueue` persists **future work**, independently of the
+legacy `add()` API and `cronHistory`. Register named handlers on each eligible
+server; enqueue EJSON data, not a function that captures request-local variables.
+
+```js
+const queue = SyncedCron.createDurableQueue({
+  collectionName: 'scheduledTasks', // separate databases/collections for environments
+  pollIntervalMs: 1000,
+  leaseDurationMs: 30000,
+  concurrency: 2, // per process
+});
+queue.register('sendReminder', async (data, execution) => {
+  await execution.assertOwnership();
+  await sendReminder(data, { idempotencyKey: execution.id });
+});
+Meteor.startup(() => queue.start());
+await queue.enqueue({
+  id: 'reminder-order-123-v1', // stable identity for this logical execution
+  type: 'sendReminder',
+  runAt: new Date(Date.now() + 60000),
+  data: { orderId: '123' },
+  maxAttempts: 5,
+  retryDelayMs: 1000,
+});
+```
+
+Workers poll MongoDB and atomically claim due work. An expired lease can be
+claimed by a surviving worker without a restart or a container-shutdown event.
+Heartbeats renew ownership while handlers run. A stale worker cannot update the
+queue record after cancellation, expiry or takeover. `execution.signal` reports
+lost ownership; `assertOwnership()` checks and renews it at an explicit checkpoint.
+MongoDB availability and reasonably synchronized server clocks are required.
+
+**Delivery is at least once.** A process can die after a side effect but before
+acknowledging completion. Handlers must use `execution.id` to deduplicate effects,
+use a transaction where appropriate, or stop for application-level reconciliation.
+Leases and cancellation cannot forcibly stop JavaScript or undo an external
+request already in progress. A lease check is not atomic with a later side effect.
+The package never serializes functions, assumes a thrown error rolled back the
+handler, or promises exactly-once business effects.
+
+- `enqueue()` is idempotent for an identical definition. Reusing an ID with a
+  different definition throws; it never resurrects terminal work. To reschedule,
+  cancel the old execution and create a new ID.
+- `get(id)` returns the persisted job, including decoded `data`, status, attempts
+  and last error. MongoDB stores the payload as an EJSON string to preserve dates,
+  binary and custom EJSON types. Optional undefined object fields are omitted.
+- `cancel(id)` cancels pending/running work and invalidates ownership.
+- `execution.fail(message)` fails permanently, without automatic retry.
+- `stop()` stops polling and waits for active handlers while renewing their leases.
+  A process that is killed instead is recovered after lease expiry.
+- `runOnce()` claims up to available concurrency and waits for those executions;
+  useful for tests and explicit batch processing.
+
+States are `pending`, `running`, `completed`, `cancelled`, and `failed`. Exceptions
+retry after `retryDelayMs`, up to `maxAttempts` (including expired claims). A crash
+on the final attempt becomes a visible failure. Only locally registered handler
+types are claimed. Rejected database/poll operations go to `onError(error)`;
+handler failures are recorded on the job. Monitor failed jobs and overdue work.
+
+Durable records have no automatic TTL: deleting a terminal record also deletes
+its enqueue-deduplication protection. Define retention appropriate to your app.
+The queue owns its indexes and uses the raw MongoDB driver; it does not publish
+its internal execution records to clients. Existing `SyncedCron.pause/stop/remove`
+only affect legacy cron entries; manage each durable queue explicitly.
+
+Migrating an existing application requires changing producers and registering
+handlers, migrating outstanding schedules, and coordinating pause/cancel paths.
+Do not remove old recovery logic before pending work has been migrated. Deploy
+compatible handlers before producers, and avoid mixed incompatible handler
+versions during rolling updates.
