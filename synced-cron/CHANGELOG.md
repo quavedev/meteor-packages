@@ -91,3 +91,9 @@ This release failed but the content is present in the next.
 ## 1.5.1 - littledata:synced-cron
 
 - Initial [version](https://github.com/percolatestudio/meteor-synced-cron).
+
+## Unreleased
+
+- Add opt-in durable one-off queues with persisted definitions, named handlers,
+  atomic claims, renewable leases, bounded retries and cancellation fencing.
+  Existing cron registration and history semantics remain unchanged.
